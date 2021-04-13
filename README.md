@@ -1,2 +1,2 @@
-# doepd.ai
-Detecting Objects while Estimating Planes and Depths
+# Detecting Objects while Estimating Planes and Depths [doepd]
+
