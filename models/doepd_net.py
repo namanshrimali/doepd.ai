@@ -15,10 +15,16 @@ class DoepdNet(torch.nn.Module):
         
         self.midas_net = MidasNet("weights/model-f6b98070.pt")
         
-        midas_encoder_filters = [3, 256, 512, 1024, 2048] # output filters from each layer of resnext 101
+        midas_encoder_filters = [256, 256, 512, 512, 1024] # output filters from each layer of resnext 101
                     
         # Each of the three layers in yolo takes input from last 3 layers of midas    
         self.yolo_decoder = YoloDecoder(midas_encoder_filters)
+        
+        
+        self.midas_layer_2_to_yolo_small_obj = nn.Conv2d(in_channels= 512, out_channels = 256, kernel_size = 1, padding = 0)
+        self.midas_layer_3_to_yolo_med_obj = nn.Conv2d(in_channels= 1024, out_channels = 512, kernel_size = 1, padding = 0)
+        self.midas_layer_4_to_yolo_med_obj = nn.Conv2d(in_channels= 2048, out_channels = 512, kernel_size = 1, padding = 0)
+        self.midas_layer_4_to_yolo_large_obj = nn.Conv2d(in_channels= 2048, out_channels = 1024, kernel_size = 1, padding = 0)
         
         # Freeze training for midas (encoder & decoder)
         for param in self.midas_net.parameters():
@@ -30,7 +36,12 @@ class DoepdNet(torch.nn.Module):
         encoder_layered_outputs = self.midas_net.forward_encoder(x)
         
         if self.train_mode == 'yolo':
-            return self.yolo_decoder.forward(encoder_layered_outputs)
+            yolo_small = self.midas_layer_2_to_yolo_small_obj(encoder_layered_outputs[1]) # midas resnext 101 layer 2
+            yolo_med = self.midas_layer_3_to_yolo_med_obj(encoder_layered_outputs[2]) # midas resnext 101 layer 3
+            yolo_med_before_upsample = self.midas_layer_4_to_yolo_med_obj(encoder_layered_outputs[3]) # midas resnext 101 layer 4
+            yolo_large = self.midas_layer_4_to_yolo_large_obj(encoder_layered_outputs[3]) # midas resnext 101 layer 4
+            
+            return self.yolo_decoder.forward([yolo_small, yolo_med_before_upsample, yolo_med, yolo_large])
         elif self.train_mode == 'midas':
             return self.midas_net.forward_decoder(encoder_layered_outputs)
     
