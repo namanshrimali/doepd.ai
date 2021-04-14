@@ -341,23 +341,24 @@ def get_yolo_layers(model):
 
 def load_yolo_decoder_weights(self, weights, cutoff=-1, device = 'cpu'):
     # Parses and loads the weights stored in 'weights'
-    
+    isBestWeights = weights.endswith('best.pt')
     chkpt = torch.load(weights, map_location = device)
     weights = []
     num_items = 0
+            
     for k, v in chkpt['model'].items():
-        if num_items >= 356:
+        if num_items >= 354:
             if not k.endswith('num_batches_tracked'):
                 if v.shape[0]!=255:
                     weights.append(v.detach().numpy())
         num_items = num_items + 1
+        
     ptr = 0
     for i, (mdef, module) in enumerate(zip(self.module_defs[:cutoff], self.module_list[:cutoff])):
         if ptr >= len(weights):
             break
         if mdef['type'] == 'convolutional':
-            conv = module[0]
-                
+            conv = module[0]   
             if mdef['batch_normalize']:
                 # Load BN bias, weights, running mean and running variance
                 bn = module[1]
@@ -373,16 +374,21 @@ def load_yolo_decoder_weights(self, weights, cutoff=-1, device = 'cpu'):
                 bn.running_var.data.copy_(torch.from_numpy(weights[ptr+4]).view_as(bn.running_var))
             else:
                 # Load conv. bias
-                nb = conv.bias.numel()
-                if nb !=27:
-                    conv_b = torch.from_numpy(weights[ptr]).view_as(conv.bias)
+                nb = conv.bias.numel()              
+                if isBestWeights or (nb !=27):
+                    conv_b = torch.from_numpy(weights[ptr+1]).view_as(conv.bias)
                     conv.bias.data.copy_(conv_b)
             
             # Load conv. weights
             nw = conv.weight.numel()  # number of weights
-            if nw%27 !=0:
+            if isBestWeights  or (nw%27 !=0):
                 conv.weight.data.copy_(torch.from_numpy(weights[ptr]).view_as(conv.weight))
-                ptr +=5
+            
+            if nw%27==0 and isBestWeights:
+                ptr+=2
+            else:
+                ptr+=5
+            
 
 
 

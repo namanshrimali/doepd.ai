@@ -6,14 +6,14 @@ from .yolo.yolo_decoder import load_yolo_decoder_weights
 class DoepdNet(torch.nn.Module):
     midas_encoder_layered_output = []
     
-    def __init__(self, train_mode, yolo_weights='weights/yolov3-spp-ultralytics.pt'):
+    def __init__(self, train_mode, yolo_weights='weights/best.pt', midas_weights = "weights/model-f6b98070.pt"):
         super(DoepdNet, self).__init__()
         self.train_mode = train_mode
 
         if not (self.train_mode == "yolo" or self.train_mode == "midas"):
             raise NotImplementedError(f'Current implementation does not support {train_mode} training mode')
         
-        self.midas_net = MidasNet("weights/model-f6b98070.pt")
+        self.midas_net = MidasNet(midas_weights)
         
         midas_encoder_filters = [256, 256, 512, 512, 1024] # output filters from each layer of resnext 101
                     
