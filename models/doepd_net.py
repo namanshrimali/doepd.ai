@@ -19,6 +19,7 @@ class DoepdNet(torch.nn.Module):
                     
         # Each of the three layers in yolo takes input from last 3 layers of midas    
         self.yolo_decoder = YoloDecoder(midas_encoder_filters)
+        self.yolo_layers = self.yolo_decoder.yolo_layers
         
         load_yolo_decoder_weights(self.yolo_decoder, yolo_weights)
         

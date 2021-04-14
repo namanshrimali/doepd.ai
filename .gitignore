@@ -1,3 +1,4 @@
 weights/*
 models/**/__pycache__
 utils/__pycache__
+data
