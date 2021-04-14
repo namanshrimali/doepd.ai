@@ -1,12 +1,12 @@
 import torch
 import torch.nn as nn
-from models.midas.midas_net import MidasNet
-from models.yolo.yolo_decoder import YoloDecoder
-
+from .midas.midas_net import MidasNet
+from .yolo.yolo_decoder import YoloDecoder
+from .yolo.yolo_decoder import load_yolo_decoder_weights
 class DoepdNet(torch.nn.Module):
     midas_encoder_layered_output = []
     
-    def __init__(self, train_mode):
+    def __init__(self, train_mode, yolo_weights='weights/yolov3-spp-ultralytics.pt'):
         super(DoepdNet, self).__init__()
         self.train_mode = train_mode
 
@@ -19,6 +19,8 @@ class DoepdNet(torch.nn.Module):
                     
         # Each of the three layers in yolo takes input from last 3 layers of midas    
         self.yolo_decoder = YoloDecoder(midas_encoder_filters)
+        
+        load_yolo_decoder_weights(self.yolo_decoder, yolo_weights)
         
         
         self.midas_layer_2_to_yolo_small_obj = nn.Conv2d(in_channels= 512, out_channels = 256, kernel_size = 1, padding = 0)
