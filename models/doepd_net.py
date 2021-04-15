@@ -3,6 +3,7 @@ import torch.nn as nn
 from .midas.midas_net import MidasNet
 from .yolo.yolo_decoder import YoloDecoder
 from .yolo.yolo_decoder import load_yolo_decoder_weights
+
 class DoepdNet(torch.nn.Module):
     midas_encoder_layered_output = []
     
@@ -21,7 +22,6 @@ class DoepdNet(torch.nn.Module):
         if train and train_mode=='yolo':
             load_yolo_decoder_weights(self.yolo_decoder, yolo_weights)
         
-        
         self.midas_layer_2_to_yolo_small_obj = nn.Conv2d(in_channels= 512, out_channels = 256, kernel_size = 1, padding = 0)
         self.midas_layer_3_to_yolo_med_obj = nn.Conv2d(in_channels= 1024, out_channels = 512, kernel_size = 1, padding = 0)
         self.midas_layer_4_to_yolo_med_obj = nn.Conv2d(in_channels= 2048, out_channels = 512, kernel_size = 1, padding = 0)
@@ -30,8 +30,6 @@ class DoepdNet(torch.nn.Module):
         # Freeze training for midas (encoder & decoder)
         for param in self.midas_net.parameters():
             param.requires_grad = False
-             
-    
     
     def forward(self, x, augment=False,):
         encoder_layered_outputs = self.midas_net.forward_encoder(x)
