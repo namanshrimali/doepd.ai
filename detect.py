@@ -19,6 +19,8 @@ def detect(save_img=False):
 
     # Initialize model
     model = DoepdNet(train_mode='yolo', train=False, image_size = img_size)
+    
+    model.load_state_dict(torch.load(weights, map_location=device)['model'])
 
     # Second-stage classifier
     classify = False
