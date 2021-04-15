@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 from models.doepd_net import *
 from utils.datasets import *
 from utils.utils import *
+from utils.parse_config import *
 
 
 def test(cfg,
