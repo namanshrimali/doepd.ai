@@ -35,7 +35,7 @@ class DoepdNet(torch.nn.Module):
              
     
     
-    def forward(self, x):
+    def forward(self, x, augment=False,):
         encoder_layered_outputs = self.midas_net.forward_encoder(x)
         
         if self.train_mode == 'yolo':
@@ -44,7 +44,7 @@ class DoepdNet(torch.nn.Module):
             yolo_med_before_upsample = self.midas_layer_4_to_yolo_med_obj(encoder_layered_outputs[3]) # midas resnext 101 layer 4
             yolo_large = self.midas_layer_4_to_yolo_large_obj(encoder_layered_outputs[3]) # midas resnext 101 layer 4
             
-            return self.yolo_decoder.forward([yolo_small, yolo_med_before_upsample, yolo_med, yolo_large])
+            return self.yolo_decoder.forward([yolo_small, yolo_med_before_upsample, yolo_med, yolo_large], augment=augment)
         elif self.train_mode == 'midas':
             return self.midas_net.forward_decoder(encoder_layered_outputs)
     
