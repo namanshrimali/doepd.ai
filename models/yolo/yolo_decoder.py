@@ -342,7 +342,6 @@ def get_yolo_layers(model):
 def load_yolo_decoder_weights(self, weights, cutoff=-1, device = 'cpu'):
     # Parses and loads the weights stored in 'weights'
     isBestWeights = weights.endswith('best.pt')
-    print(isBestWeights)
     chkpt = torch.load(weights, map_location = device)
     weights = []
     num_items = 0
@@ -364,9 +363,7 @@ def load_yolo_decoder_weights(self, weights, cutoff=-1, device = 'cpu'):
             break
         
         if mdef['type'] == 'convolutional':
-            conv = module[0]  
-            print(conv)
-            print(weights[ptr].shape)
+            conv = module[0]
             if mdef['batch_normalize']:
                 # Load BN bias, weights, running mean and running variance
                 bn = module[1]
