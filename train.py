@@ -5,7 +5,6 @@ import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 
 import test  # import test.py to get mAP after each epoch
-from models import *
 from utils.datasets import *
 from utils.utils import *
 from utils.parse_config import *
@@ -91,7 +90,7 @@ def train():
         os.remove(f)
 
     # Initialize model
-    model = DoepdNet(train_mode='yolo').to(device)
+    model = DoepdNet(train_mode='yolo', image_size=img-size).to(device)
 
     # Optimizer
     pg0, pg1, pg2 = [], [], []  # optimizer parameter groups

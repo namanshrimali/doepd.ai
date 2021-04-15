@@ -6,7 +6,7 @@ from .yolo.yolo_decoder import load_yolo_decoder_weights
 class DoepdNet(torch.nn.Module):
     midas_encoder_layered_output = []
     
-    def __init__(self, train_mode, yolo_weights='weights/best.pt', midas_weights = "weights/model-f6b98070.pt"):
+    def __init__(self, train_mode, yolo_weights='weights/best.pt', midas_weights = "weights/model-f6b98070.pt", image_size=384):
         super(DoepdNet, self).__init__()
         self.train_mode = train_mode
 
@@ -18,7 +18,7 @@ class DoepdNet(torch.nn.Module):
         midas_encoder_filters = [256, 256, 512, 512, 1024] # output filters from each layer of resnext 101
                     
         # Each of the three layers in yolo takes input from last 3 layers of midas    
-        self.yolo_decoder = YoloDecoder(midas_encoder_filters)
+        self.yolo_decoder = YoloDecoder(midas_encoder_filters, (image_size, image_size))
         self.yolo_layers = self.yolo_decoder.yolo_layers
         
         load_yolo_decoder_weights(self.yolo_decoder, yolo_weights)

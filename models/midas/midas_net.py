@@ -18,7 +18,7 @@ class MidasNet(BaseModel):
         Args:
             path (str, optional): Path to saved model. Defaults to None.
             features (int, optional): Number of features. Defaults to 256.
-            backbone (str, optional): Backbone network for encoder. Defaults to resnet50
+            backbone (str, optional): Backbone network for encoder. Defaults to resnext101
         """
 
         print("Loading weights: ", path)

@@ -217,7 +217,7 @@ class YOLOLayer(nn.Module):
 class YoloDecoder(nn.Module):
     # YOLOv3 object detection model
 
-    def __init__(self, encoder_filters, cfg="cfg/yolov3-custom.cfg", img_size=(384, 384), verbose=False):
+    def __init__(self, encoder_filters, img_size, cfg="cfg/yolov3-custom.cfg", verbose=False):
         super(YoloDecoder, self).__init__()
 
         self.module_defs = parse_model_cfg(cfg)
@@ -342,12 +342,17 @@ def get_yolo_layers(model):
 def load_yolo_decoder_weights(self, weights, cutoff=-1, device = 'cpu'):
     # Parses and loads the weights stored in 'weights'
     isBestWeights = weights.endswith('best.pt')
+    print(isBestWeights)
     chkpt = torch.load(weights, map_location = device)
     weights = []
     num_items = 0
+    if isBestWeights:
+        start_index = 354
+    else:
+        start_index = 356
             
     for k, v in chkpt['model'].items():
-        if num_items >= 354:
+        if num_items >= start_index:
             if not k.endswith('num_batches_tracked'):
                 if v.shape[0]!=255:
                     weights.append(v.detach().numpy())
@@ -357,8 +362,11 @@ def load_yolo_decoder_weights(self, weights, cutoff=-1, device = 'cpu'):
     for i, (mdef, module) in enumerate(zip(self.module_defs[:cutoff], self.module_list[:cutoff])):
         if ptr >= len(weights):
             break
+        
         if mdef['type'] == 'convolutional':
-            conv = module[0]   
+            conv = module[0]  
+            print(conv)
+            print(weights[ptr].shape)
             if mdef['batch_normalize']:
                 # Load BN bias, weights, running mean and running variance
                 bn = module[1]
