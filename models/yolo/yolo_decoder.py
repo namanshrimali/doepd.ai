@@ -341,7 +341,7 @@ def get_yolo_layers(model):
 
 def load_yolo_decoder_weights(self, weights, cutoff=-1, device = 'cpu'):
     # Parses and loads the weights stored in 'weights'
-    isBestWeights = weights.endswith('best.pt')
+    isBestWeights = weights.endswith('yolo_best.pt')
     chkpt = torch.load(weights, map_location = device)
     weights = []
     num_items = 0
