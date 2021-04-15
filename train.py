@@ -90,7 +90,7 @@ def train():
         os.remove(f)
 
     # Initialize model
-    model = DoepdNet(train_mode='yolo', image_size=opt.image_size).to(device)
+    model = DoepdNet(train_mode='yolo', image_size=opt.img_size).to(device)
 
     # Optimizer
     pg0, pg1, pg2 = [], [], []  # optimizer parameter groups
