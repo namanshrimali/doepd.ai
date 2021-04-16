@@ -7,7 +7,7 @@ from .yolo.yolo_decoder import load_yolo_decoder_weights
 class DoepdNet(torch.nn.Module):
     midas_encoder_layered_output = []
     
-    def __init__(self, train_mode, train=True, yolo_weights='weights/yolo_best.pt', midas_weights = "weights/model-f6b98070.pt", image_size=384):
+    def __init__(self, train_mode, train=True, midas_weights = "weights/model-f6b98070.pt", image_size=384):
         super(DoepdNet, self).__init__()
         self.train_mode = train_mode
 
@@ -19,8 +19,8 @@ class DoepdNet(torch.nn.Module):
         self.yolo_decoder = YoloDecoder(midas_encoder_filters, (image_size, image_size))
         self.yolo_layers = self.yolo_decoder.yolo_layers
         
-        if train and train_mode=='yolo':
-            load_yolo_decoder_weights(self.yolo_decoder, yolo_weights)
+        # if train and train_mode=='yolo':
+        #     load_yolo_decoder_weights(self.yolo_decoder, yolo_weights)
         
         self.midas_layer_2_to_yolo_small_obj = nn.Conv2d(in_channels= 512, out_channels = 256, kernel_size = 1, padding = 0)
         self.midas_layer_3_to_yolo_med_obj = nn.Conv2d(in_channels= 1024, out_channels = 512, kernel_size = 1, padding = 0)
@@ -31,7 +31,7 @@ class DoepdNet(torch.nn.Module):
         for param in self.midas_net.parameters():
             param.requires_grad = False
     
-    def forward(self, x, augment=False,):
+    def forward(self, x, augment=False):
         encoder_layered_outputs = self.midas_net.forward_encoder(x)
         
         if self.train_mode == 'yolo':
@@ -44,6 +44,56 @@ class DoepdNet(torch.nn.Module):
         elif self.train_mode == 'midas':
             return self.midas_net.forward_decoder(encoder_layered_outputs)
     
+def load_doepd_weights(self, device='cpu', resume=True, train_mode = False, load_mode='all'):
+    yolo_weights = []
+    chkpt = None
         
-          
+    if resume:
+        # loading yolo weights
+        yolo_weight_file = None
+        # planer_cnn_file = None
         
+        # loading yolo weights from last/best based on train_mode. Will update to add planercnn weights
+        if train_mode:
+            yolo_weight_file = 'weights/doepd_yolo_last.pt'
+        else:
+            yolo_weight_file = 'weights/doepd_yolo_best.pt'
+            
+        chkpt = torch.load(yolo_weight_file, map_location = device)
+            
+        num_items = 0
+        for k, v in chkpt['model'].items():
+            if num_items>=666 and num_items<756:
+                if not k.endswith('num_batches_tracked'):
+                    yolo_weights.append(v.detach().numpy())
+            num_items = num_items + 1 
+                
+        self.midas_layer_2_to_yolo_small_obj.weight = torch.nn.Parameter(chkpt['model']['midas_layer_2_to_yolo_small_obj.weight'])
+        self.midas_layer_2_to_yolo_small_obj.bias = torch.nn.Parameter(chkpt['model']['midas_layer_2_to_yolo_small_obj.bias'])
+        self.midas_layer_3_to_yolo_med_obj.weight = torch.nn.Parameter(chkpt['model']['midas_layer_3_to_yolo_med_obj.weight'])
+        self.midas_layer_3_to_yolo_med_obj.bias = torch.nn.Parameter(chkpt['model']['midas_layer_3_to_yolo_med_obj.bias'])
+        self.midas_layer_4_to_yolo_med_obj.weight = torch.nn.Parameter(chkpt['model']['midas_layer_4_to_yolo_med_obj.weight'])
+        self.midas_layer_4_to_yolo_med_obj.bias = torch.nn.Parameter(chkpt['model']['midas_layer_4_to_yolo_med_obj.bias'])
+        self.midas_layer_4_to_yolo_large_obj.weight = torch.nn.Parameter(chkpt['model']['midas_layer_4_to_yolo_large_obj.weight'])
+        self.midas_layer_4_to_yolo_large_obj.bias = torch.nn.Parameter(chkpt['model']['midas_layer_4_to_yolo_large_obj.bias'])
+            
+                    
+            
+    else:
+         # loading yolo_best weights : got from 300 epochs trained in Assignment 13
+            
+        yolo_weight_file='weights/yolo_old_300.pt'
+            
+        chkpt = torch.load(yolo_weight_file, map_location = device)
+            
+        num_items=0
+        for k, v in chkpt['model'].items():
+            if num_items >= 354:
+                if not k.endswith('num_batches_tracked'):
+                    if v.shape[0]!=255:
+                        yolo_weights.append(v.detach().numpy())
+            num_items = num_items + 1
+            
+    load_yolo_decoder_weights(self.yolo_decoder, yolo_weights)
+    
+    return chkpt

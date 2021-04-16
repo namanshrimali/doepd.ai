@@ -19,8 +19,8 @@ except:
     mixed_precision = False  # not installed
 
 wdir = 'weights' + os.sep  # weights dir
-last = wdir + 'last.pt'
-best = wdir + 'best.pt'
+last = wdir + 'doepd_yolo_last.pt'
+best = wdir + 'doepd_yolo_best.pt'
 results_file = 'results.txt'
 
 # Hyperparameters https://github.com/ultralytics/yolov3/issues/310
@@ -89,9 +89,7 @@ def train():
     for f in glob.glob('*_batch*.png') + glob.glob(results_file):
         os.remove(f)
 
-    # Initialize model
-    model = DoepdNet(train_mode='yolo', image_size=opt.img_size).to(device)
-
+    
     # Optimizer
     pg0, pg1, pg2 = [], [], []  # optimizer parameter groups
     for k, v in dict(model.named_parameters()).items():
@@ -114,7 +112,27 @@ def train():
 
     start_epoch = 0
     best_fitness = 0.0
-    # attempt_download(weights)
+    
+    # Initialize model
+    model = DoepdNet(train_mode='yolo', image_size=opt.img_size).to(device)
+    
+    chkpt = load_doepd_weights(model, device=device, resume=opt.resume, train_mode=True)
+    
+     # load optimizer
+    if chkpt['optimizer'] is not None:
+        optimizer.load_state_dict(chkpt['optimizer'])
+        best_fitness = chkpt['best_fitness']
+
+    # load results
+    if chkpt.get('training_results') is not None:
+        with open(results_file, 'w') as file:
+            file.write(chkpt['training_results'])  # write results.txt
+
+    start_epoch = chkpt['epoch'] + 1
+    
+    del chkpt
+    
+    
     # Mixed precision training https://github.com/NVIDIA/apex
     if mixed_precision:
         model, optimizer = amp.initialize(model, optimizer, opt_level='O1', verbosity=0)
@@ -320,11 +338,12 @@ def train():
                      'optimizer': None if final_epoch else optimizer.state_dict()}
 
             # Save last checkpoint
-            torch.save(chkpt, '/content/drive/MyDrive/construction_yolo/best.pt')
-            torch.save(chkpt, '/content/doepd.ai/weights/last.pt')
+            torch.save(chkpt, '/content/drive/MyDrive/construction_yolo/doepd_yolo_last.pt')
+            torch.save(chkpt, last)
 
             # Save best checkpoint
             if (best_fitness == fi) and not final_epoch:
+                torch.save(chkpt, '/content/drive/MyDrive/construction_yolo/doepd_yolo_best.pt')
                 torch.save(chkpt, best)
 
             # Save backup every 10 epochs (optional)
@@ -341,7 +360,7 @@ def train():
     if len(n):
         n = '_' + n if not n.isnumeric() else n
         fresults, flast, fbest = 'results%s.txt' % n, wdir + 'last%s.pt' % n, wdir + 'best%s.pt' % n
-        for f1, f2 in zip([wdir + 'last.pt', wdir + 'best.pt', 'results.txt'], [flast, fbest, fresults]):
+        for f1, f2 in zip([wdir + 'doepd_yolo_last.pt', wdir + 'doepd_yolo_best.pt', 'results.txt'], [flast, fbest, fresults]):
             if os.path.exists(f1):
                 os.rename(f1, f2)  # rename
                 ispt = f2.endswith('.pt')  # is *.pt
@@ -367,7 +386,7 @@ if __name__ == '__main__':
     parser.add_argument('--multi-scale', action='store_true', help='adjust (67%% - 150%%) img_size every 10 batches')
     parser.add_argument('--img-size', nargs='+', type=int, default=[64], help='[min_train, max-train, test] img sizes')
     parser.add_argument('--rect', action='store_true', help='rectangular training')
-    parser.add_argument('--resume', action='store_true', help='resume training from last.pt')
+    parser.add_argument('--resume', action='store_true', help='resume training from doepd_yolo_last.pt')
     parser.add_argument('--nosave', action='store_true', help='only save final checkpoint')
     parser.add_argument('--notest', action='store_true', help='only test final epoch')
     parser.add_argument('--evolve', action='store_true', help='evolve hyperparameters')
@@ -380,7 +399,6 @@ if __name__ == '__main__':
     parser.add_argument('--single-cls', action='store_true', help='train as single-class dataset')
     opt = parser.parse_args()
     opt.weights = last if opt.resume else opt.weights
-    print(opt)
     opt.img_size.extend([opt.img_size[-1]] * (3 - len(opt.img_size)))  # extend to 3 sizes (min, max, test)
     device = torch_utils.select_device(opt.device, apex=mixed_precision, batch_size=opt.batch_size)
     if device.type == 'cpu':

@@ -20,7 +20,7 @@ def detect(save_img=False):
     # Initialize model
     model = DoepdNet(train_mode='yolo', train=False, image_size = img_size)
     
-    model.load_state_dict(torch.load(weights, map_location=device)['model'])
+    load_doepd_weights(model, device=device, train_mode=False, resume=opt.resume)
 
     # Second-stage classifier
     classify = False
@@ -160,7 +160,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--cfg', type=str, default='cfg/yolov3-custom.cfg', help='*.cfg path')
     parser.add_argument('--names', type=str, default='data/assignment13/custom.names', help='*.names path')
-    parser.add_argument('--weights', type=str, default='weights/last.pt', help='weights path')
+    parser.add_argument('--weights', type=str, default='weights/doepd_yolo_best.pt', help='weights path')
     parser.add_argument('--source', type=str, default='data/customdata/images', help='source')  # input file/folder, 0 for webcam
     parser.add_argument('--output', type=str, default='output', help='output folder')  # output folder
     parser.add_argument('--img-size', type=int, default=512, help='inference size (pixels)')

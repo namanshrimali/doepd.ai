@@ -32,9 +32,10 @@ def test(cfg,
 
         # Initialize model
         model = DoepdNet(train_mode='yolo', image_size = img_size)
+        load_doepd_weights(model, device=device, resume=False)
 
         # Fuse
-        model.fuse()
+        # model.fuse()
         model.to(device)
 
         if device.type != 'cpu' and torch.cuda.device_count() > 1:
