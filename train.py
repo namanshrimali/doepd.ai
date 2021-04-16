@@ -91,20 +91,22 @@ def train():
 
     # Initialize model
     model = DoepdNet(train_mode='yolo', image_size=opt.img_size).to(device)
-    
     chkpt = load_doepd_weights(model, device=device, resume=opt.resume, train_mode=True)
     
     
     # Optimizer
     pg0, pg1, pg2 = [], [], []  # optimizer parameter groups
+    num_items=0
     for k, v in dict(model.named_parameters()).items():
-        if '.bias' in k:
-            pg2 += [v]  # biases
-        elif 'Conv2d.weight' in k:
-            pg1 += [v]  # apply weight_decay
-        else:
-            pg0 += [v]  # all else
-
+        if num_items>=354 and num_items<402:
+            if '.bias' in k:
+                pg2 += [v]  # biases
+            elif 'Conv2d.weight' in k:
+                pg1 += [v]  # apply weight_decay
+            else:
+                pg0 += [v]  # all else
+        num_items +=1
+            
     if opt.adam:
         # hyp['lr0'] *= 0.1  # reduce lr (i.e. SGD=5E-3, Adam=5E-4)
         optimizer = optim.Adam(pg0, lr=hyp['lr0'])
@@ -113,7 +115,7 @@ def train():
         optimizer = optim.SGD(pg0, lr=hyp['lr0'], momentum=hyp['momentum'], nesterov=True)
     optimizer.add_param_group({'params': pg1, 'weight_decay': hyp['weight_decay']})  # add pg1 with weight_decay
     optimizer.add_param_group({'params': pg2})  # add pg2 (biases)
-    del pg0, pg1, pg2
+    del pg0, pg1, pg2, num_items
 
     start_epoch = 0
     best_fitness = 0.0

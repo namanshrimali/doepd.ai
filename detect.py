@@ -20,7 +20,7 @@ def detect(save_img=False):
     # Initialize model
     model = DoepdNet(train_mode='yolo', train=False, image_size = img_size)
     
-    load_doepd_weights(model, device=device, train_mode=False, resume=opt.resume)
+    load_doepd_weights(model, device=device, train_mode=False)
 
     # Second-stage classifier
     classify = False
