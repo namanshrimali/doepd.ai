@@ -44,11 +44,11 @@ class DoepdNet(torch.nn.Module):
         elif self.train_mode == 'midas':
             return self.midas_net.forward_decoder(encoder_layered_outputs)
     
-def load_doepd_weights(self, device='cpu', resume=True, train_mode = False, load_mode='all'):
+def load_doepd_weights(self, device='cpu', scratch=False, train_mode = False, load_mode='all'):
     yolo_weights = []
     chkpt = None
         
-    if resume:
+    if not scratch:
         # loading yolo weights
         yolo_weight_file = None
         # planer_cnn_file = None

@@ -91,7 +91,7 @@ def train():
 
     # Initialize model
     model = DoepdNet(train_mode='yolo', image_size=opt.img_size).to(device)
-    chkpt = load_doepd_weights(model, device=device, resume=opt.resume, train_mode=True)
+    chkpt = load_doepd_weights(model, device=device, train_mode=True)
     
     
     # Optimizer
