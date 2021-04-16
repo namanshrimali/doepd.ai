@@ -90,9 +90,9 @@ def train():
         os.remove(f)
 
     # Initialize model
-    model = DoepdNet(train_mode='yolo', image_size=opt.img_size).to(device)
+    model = DoepdNet(train_mode='yolo', image_size=opt.img_size)
     chkpt = load_doepd_weights(model, device=device, train_mode=True)
-    
+    model.to(device)    
     
     # Optimizer
     pg0, pg1, pg2 = [], [], []  # optimizer parameter groups
@@ -131,7 +131,8 @@ def train():
         with open(results_file, 'w') as file:
             file.write(chkpt['training_results'])  # write results.txt
 
-    start_epoch = chkpt['epoch'] + 1
+    if opt.resume:
+        start_epoch = chkpt['epoch'] + 1
     
     del chkpt
     
