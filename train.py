@@ -89,6 +89,11 @@ def train():
     for f in glob.glob('*_batch*.png') + glob.glob(results_file):
         os.remove(f)
 
+    # Initialize model
+    model = DoepdNet(train_mode='yolo', image_size=opt.img_size).to(device)
+    
+    chkpt = load_doepd_weights(model, device=device, resume=opt.resume, train_mode=True)
+    
     
     # Optimizer
     pg0, pg1, pg2 = [], [], []  # optimizer parameter groups
@@ -113,10 +118,6 @@ def train():
     start_epoch = 0
     best_fitness = 0.0
     
-    # Initialize model
-    model = DoepdNet(train_mode='yolo', image_size=opt.img_size).to(device)
-    
-    chkpt = load_doepd_weights(model, device=device, resume=opt.resume, train_mode=True)
     
      # load optimizer
     if chkpt['optimizer'] is not None:

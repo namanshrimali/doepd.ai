@@ -59,7 +59,7 @@ def load_doepd_weights(self, device='cpu', resume=True, train_mode = False, load
         else:
             yolo_weight_file = 'weights/doepd_yolo_best.pt'
             
-        chkpt = torch.load(yolo_weight_file, map_location = device)
+        chkpt = torch.load(yolo_weight_file, map_location = "cpu")
             
         num_items = 0
         for k, v in chkpt['model'].items():
