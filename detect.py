@@ -18,7 +18,7 @@ def detect(save_img=False):
     os.makedirs(out)  # make new output folder
 
     # Initialize model
-    model = DoepdNet(train_mode='yolo', train=False, image_size = img_size)
+    model = DoepdNet(train_mode='yolo', image_size = img_size)
     
     load_doepd_weights(model, device=device, train_mode=False)
 
