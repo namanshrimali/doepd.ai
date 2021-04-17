@@ -7,7 +7,7 @@ from .yolo.yolo_decoder import load_yolo_decoder_weights
 class DoepdNet(torch.nn.Module):
     midas_encoder_layered_output = []
     
-    def __init__(self, train_mode, train=True, midas_weights = "weights/model-f6b98070.pt", image_size=384):
+    def __init__(self, train_mode, midas_weights = "weights/model-f6b98070.pt", image_size=384):
         super(DoepdNet, self).__init__()
         self.train_mode = train_mode
 
@@ -19,8 +19,6 @@ class DoepdNet(torch.nn.Module):
         self.yolo_decoder = YoloDecoder(midas_encoder_filters, (image_size, image_size))
         self.yolo_layers = self.yolo_decoder.yolo_layers
         
-        # if train and train_mode=='yolo':
-        #     load_yolo_decoder_weights(self.yolo_decoder, yolo_weights)
         
         self.midas_layer_2_to_yolo_small_obj = nn.Conv2d(in_channels= 512, out_channels = 256, kernel_size = 1, padding = 0)
         self.midas_layer_3_to_yolo_med_obj = nn.Conv2d(in_channels= 1024, out_channels = 512, kernel_size = 1, padding = 0)

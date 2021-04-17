@@ -339,24 +339,7 @@ def get_yolo_layers(model):
     return [i for i, m in enumerate(model.module_list) if m.__class__.__name__ == 'YOLOLayer']  # [89, 101, 113]
 
 
-def load_yolo_decoder_weights(self, weights, cutoff=-1, device = 'cpu'):
-    # Parses and loads the weights stored in 'weights'
-    # isBestWeights = weights.endswith('yolo_best.pt')
-    # chkpt = torch.load(weights, map_location = device)
-    # weights = []
-    # num_items = 0
-    # if isBestWeights:
-    #     start_index = 354
-    # else:
-    #     start_index = 356
-            
-    # for k, v in chkpt['model'].items():
-    #     if num_items >= start_index:
-    #         if not k.endswith('num_batches_tracked'):
-    #             if v.shape[0]!=255:
-    #                 weights.append(v.detach().numpy())
-    #     num_items = num_items + 1
-        
+def load_yolo_decoder_weights(self, weights, cutoff=-1, device = 'cpu'):        
     ptr = 0
     for i, (mdef, module) in enumerate(zip(self.module_defs[:cutoff], self.module_list[:cutoff])):
         if ptr >= len(weights):
@@ -380,15 +363,13 @@ def load_yolo_decoder_weights(self, weights, cutoff=-1, device = 'cpu'):
             else:
                 # Load conv. bias
                 nb = conv.bias.numel()              
-                if nb !=27:
-                    conv_b = torch.from_numpy(weights[ptr+1]).view_as(conv.bias)
-                    conv.bias.data.copy_(conv_b)
+                conv_b = torch.from_numpy(weights[ptr+1]).view_as(conv.bias)
+                conv.bias.data.copy_(conv_b)
             
             # Load conv. weights
             nw = conv.weight.numel()  # number of weights
-            if nw%27 !=0:
-                conv.weight.data.copy_(torch.from_numpy(weights[ptr]).view_as(conv.weight))
-            
+            conv.weight.data.copy_(torch.from_numpy(weights[ptr]).view_as(conv.weight))
+                
             if nw%27==0:
                 ptr+=2
             else:
