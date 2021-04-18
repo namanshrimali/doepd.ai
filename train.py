@@ -22,6 +22,7 @@ wdir = 'weights' + os.sep  # weights dir
 last = wdir + 'doepd_yolo_last.pt'
 best = wdir + 'doepd_yolo_best.pt'
 results_file = 'results.txt'
+gdrive_dir = opt.save_dir
 
 # Hyperparameters https://github.com/ultralytics/yolov3/issues/310
 
@@ -331,7 +332,7 @@ def train():
             best_fitness = fi
 
         # Save training results
-        save = (not opt.nosave) or (final_epoch and not opt.evolve)
+        # save = (not opt.nosave) or (final_epoch and not opt.evolve)
         #if save:
         with open(results_file, 'r') as f:
             # Create checkpoint
@@ -342,12 +343,12 @@ def train():
                      'optimizer': None if final_epoch else optimizer.state_dict()}
 
             # Save last checkpoint
-            torch.save(chkpt, '/content/drive/MyDrive/construction_yolo/doepd_yolo_last.pt')
+            torch.save(chkpt, f'{gdrive_dir}/doepd_yolo_last.pt')
             torch.save(chkpt, last)
 
             # Save best checkpoint
             if (best_fitness == fi) and not final_epoch:
-                torch.save(chkpt, '/content/drive/MyDrive/construction_yolo/doepd_yolo_best.pt')
+                torch.save(chkpt, f'{gdrive_dir}/doepd_yolo_best.pt')
                 torch.save(chkpt, best)
 
             # Save backup every 10 epochs (optional)
@@ -401,6 +402,8 @@ if __name__ == '__main__':
     parser.add_argument('--device', default='', help='device id (i.e. 0 or 0,1 or cpu)')
     parser.add_argument('--adam', action='store_true', help='use adam optimizer')
     parser.add_argument('--single-cls', action='store_true', help='train as single-class dataset')
+    parser.add_argument('--save-dir', type=str, default='/content/drive/MyDrive/doepd/weights', help='*.cfg path')
+
     opt = parser.parse_args()
     opt.weights = last if opt.resume else opt.weights
     opt.img_size.extend([opt.img_size[-1]] * (3 - len(opt.img_size)))  # extend to 3 sizes (min, max, test)
