@@ -34,7 +34,7 @@ def parse_args():
                         default='../../Data/ScanNet/', type=str)
     parser.add_argument('--anchorFolder', dest='anchorFolder',
                         help='anchor folder',
-                        default='anchors/', type=str)    
+                        default='models/planercnn/anchors/', type=str)    
     parser.add_argument('--customDataFolder', dest='customDataFolder',
                         help='data folder',
                         default='test/custom', type=str)
