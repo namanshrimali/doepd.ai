@@ -235,7 +235,7 @@ class Config(object):
                 self.ANCHOR_OFFSETS_TENSOR = torch.from_numpy(self.ANCHOR_OFFSETS.astype(np.float32)).cuda()
             elif 'normal' in self.ANCHOR_TYPE:
                 if self.ANCHOR_TYPE == 'normal':
-                    self.ANCHOR_NORMALS = np.load(self.dataFolder + '/anchor_planes_N.npy')
+                    self.ANCHOR_NORMALS = np.load('models/planercnn/anchors' + '/anchor_planes_N.npy')
                 else:
                     k = int(self.ANCHOR_TYPE[6:])
                     if k == 0:
