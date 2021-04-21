@@ -85,15 +85,11 @@ class SamePad2d(nn.Module):
 ############################################################
 
 class FPN(nn.Module):
-    def __init__(self, C1, C2, C3, C4, C5, out_channels, bilinear_upsampling=False):
+    def __init__(self, out_channels, bilinear_upsampling=False):
         super(FPN, self).__init__()
         self.out_channels = out_channels
         self.bilinear_upsampling = bilinear_upsampling
-        self.C1 = C1
-        self.C2 = C2
-        self.C3 = C3
-        self.C4 = C4
-        self.C5 = C5
+        
         self.P6 = nn.MaxPool2d(kernel_size=1, stride=2)
         self.P5_conv1 = nn.Conv2d(2048, self.out_channels, kernel_size=1, stride=1)
         self.P5_conv2 = nn.Sequential(
@@ -116,21 +112,13 @@ class FPN(nn.Module):
             nn.Conv2d(self.out_channels, self.out_channels, kernel_size=3, stride=1),
         )
 
-    def forward(self, x):
-        x = self.C1(x)
-        x = self.C2(x)
-        c2_out = x
-        x = self.C3(x)
-        c3_out = x
-        x = self.C4(x)
-        c4_out = x
-        x = self.C5(x)
-        p5_out = self.P5_conv1(x)
+    def forward(self, x, encoder_layered_outputs):        
+        p5_out = self.P5_conv1(encoder_layered_outputs[3]) # p5_out -> resnet layer4
         
         if self.bilinear_upsampling:
-            p4_out = self.P4_conv1(c4_out) + F.upsample(p5_out, scale_factor=2, mode='bilinear')
-            p3_out = self.P3_conv1(c3_out) + F.upsample(p4_out, scale_factor=2, mode='bilinear')
-            p2_out = self.P2_conv1(c2_out) + F.upsample(p3_out, scale_factor=2, mode='bilinear')
+            p4_out = self.P4_conv1(encoder_layered_outputs[2]) + F.upsample(p5_out, scale_factor=2, mode='bilinear') #c4 -> resnet layer3
+            p3_out = self.P3_conv1(encoder_layered_outputs[1]) + F.upsample(p4_out, scale_factor=2, mode='bilinear') #c3-> resnet layer2
+            p2_out = self.P2_conv1(encoder_layered_outputs[0]) + F.upsample(p3_out, scale_factor=2, mode='bilinear') #c2-> resnet layer1
         else:
             p4_out = self.P4_conv1(c4_out) + F.upsample(p5_out, scale_factor=2)
             p3_out = self.P3_conv1(c3_out) + F.upsample(p4_out, scale_factor=2)
@@ -147,104 +135,6 @@ class FPN(nn.Module):
         p6_out = self.P6(p5_out)
 
         return [p2_out, p3_out, p4_out, p5_out, p6_out]
-
-############################################################
-#  Resnet Graph
-############################################################
-
-class Bottleneck(nn.Module):
-    expansion = 4
-
-    def __init__(self, inplanes, planes, stride=1, downsample=None):
-        super(Bottleneck, self).__init__()
-        self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, stride=stride)
-        self.bn1 = nn.BatchNorm2d(planes, eps=0.001, momentum=0.01)
-        self.padding2 = SamePad2d(kernel_size=3, stride=1)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3)
-        self.bn2 = nn.BatchNorm2d(planes, eps=0.001, momentum=0.01)
-        self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1)
-        self.bn3 = nn.BatchNorm2d(planes * 4, eps=0.001, momentum=0.01)
-        self.relu = nn.ReLU(inplace=True)
-        self.downsample = downsample
-        self.stride = stride
-
-    def forward(self, x):
-        residual = x
-
-        out = self.conv1(x)
-        out = self.bn1(out)
-        out = self.relu(out)
-
-        out = self.padding2(out)
-        out = self.conv2(out)
-        out = self.bn2(out)
-        out = self.relu(out)
-
-        out = self.conv3(out)
-        out = self.bn3(out)
-
-        if self.downsample is not None:
-            residual = self.downsample(x)
-
-        out = out + residual
-        out = self.relu(out)
-
-        return out
-
-class ResNet(nn.Module):
-
-    def __init__(self, architecture, stage5=False, numInputChannels=3):
-        super(ResNet, self).__init__()
-        assert architecture in ["resnet50", "resnet101"]
-        self.inplanes = 64
-        self.layers = [3, 4, {"resnet50": 6, "resnet101": 23}[architecture], 3]
-        self.block = Bottleneck
-        self.stage5 = stage5
-
-        self.C1 = nn.Sequential(
-            nn.Conv2d(numInputChannels, 64, kernel_size=7, stride=2, padding=3),
-            nn.BatchNorm2d(64, eps=0.001, momentum=0.01),
-            nn.ReLU(inplace=True),
-            SamePad2d(kernel_size=3, stride=2),
-            nn.MaxPool2d(kernel_size=3, stride=2),
-        )
-        self.C2 = self.make_layer(self.block, 64, self.layers[0])
-        self.C3 = self.make_layer(self.block, 128, self.layers[1], stride=2)
-        self.C4 = self.make_layer(self.block, 256, self.layers[2], stride=2)
-        # we need to send stage5 as false, will add our own layer
-        if self.stage5:
-            self.C5 = self.make_layer(self.block, 512, self.layers[3], stride=2)
-        else:
-            self.C5 = None
-
-    def forward(self, x):
-        x = self.C1(x)
-        x = self.C2(x)
-        x = self.C3(x)
-        x = self.C4(x)
-        x = self.C5(x)
-        return x
-
-
-    def stages(self):
-        return [self.C1, self.C2, self.C3, self.C4, self.C5]
-
-    def make_layer(self, block, planes, blocks, stride=1):
-        downsample = None
-        if stride != 1 or self.inplanes != planes * block.expansion:
-            downsample = nn.Sequential(
-                nn.Conv2d(self.inplanes, planes * block.expansion,
-                          kernel_size=1, stride=stride),
-                nn.BatchNorm2d(planes * block.expansion, eps=0.001, momentum=0.01),
-            )
-
-        layers = []
-        layers.append(block(self.inplanes, planes, stride, downsample))
-        self.inplanes = planes * block.expansion
-        for i in range(1, blocks):
-            layers.append(block(self.inplanes, planes))
-
-        return nn.Sequential(*layers)
 
 ############################################################
 #  Proposal Layer
@@ -1400,7 +1290,7 @@ class MaskRCNN(nn.Module):
         self.loss_history = []
         self.val_loss_history = []
 
-    def build(self, config):
+    def build(self, config, midas_decoder = None):
         """Build Mask R-CNN architecture.
         """
 
@@ -1415,12 +1305,13 @@ class MaskRCNN(nn.Module):
         ## Bottom-up Layers
         ## Returns a list of the last layers of each stage, 5 in total.
         ## Don't create the thead (stage 5), so we pick the 4th item in the list.
-        resnet = ResNet("resnet101", stage5=True, numInputChannels=config.NUM_INPUT_CHANNELS)
-        C1, C2, C3, C4, C5 = resnet.stages()
+        
+        # resnet = ResNet("resnet101", stage5=True, numInputChannels=config.NUM_INPUT_CHANNELS)
+        # C1, C2, C3, C4, C5 = resnet.stages()
 
         ## Top-down Layers
         ## TODO: add assert to verify feature map sizes match what's in config
-        self.fpn = FPN(C1, C2, C3, C4, C5, out_channels=256, bilinear_upsampling=self.config.BILINEAR_UPSAMPLING)
+        self.fpn = FPN(out_channels=256, bilinear_upsampling=self.config.BILINEAR_UPSAMPLING)
 
         ## Generate Anchors
         self.anchors = Variable(torch.from_numpy(generate_pyramid_anchors(config.RPN_ANCHOR_SCALES,
@@ -1610,6 +1501,9 @@ class MaskRCNN(nn.Module):
         #molded_images = Variable(molded_images, volatile=True)
 
         ## Run object detection
+        
+        # temporarily remove this self.predict call, insert doepd forward call here, which will in turn call predict
+        # in later stages, I'll create a unified script, which will create molded images & everything
         detections, mrcnn_mask, depth_np = self.predict([molded_images, image_metas, camera], mode='inference')
 
         if len(detections[0]) == 0:
@@ -1634,9 +1528,9 @@ class MaskRCNN(nn.Module):
             })
         return results
 
-    def predict(self, input, mode, use_nms=1, use_refinement=False, return_feature_map=False):
-        molded_images = input[0]
-        image_metas = input[1]
+    def predict(self, images, image_meta_data, mode, encoder_layered_outputs = None, use_nms=1, use_refinement=False, return_feature_map=False):
+        molded_images = images
+        image_metas = image_meta_data[1]
 
         if mode == 'inference':
             self.eval()
@@ -1651,7 +1545,7 @@ class MaskRCNN(nn.Module):
             self.apply(set_bn_eval)
 
         ## Feature extraction
-        [p2_out, p3_out, p4_out, p5_out, p6_out] = self.fpn(molded_images)
+        [p2_out, p3_out, p4_out, p5_out, p6_out] = self.fpn.forward(molded_images, encoder_layered_outputs)
         ## Note that P6 is used in RPN, but not in the classifier heads.
 
         rpn_feature_maps = [p2_out, p3_out, p4_out, p5_out, p6_out]
@@ -1670,7 +1564,7 @@ class MaskRCNN(nn.Module):
             depth_np = torch.ones((1, self.config.IMAGE_MAX_DIM, self.config.IMAGE_MAX_DIM)).cuda()
             pass
         
-        ranges = self.config.getRanges(input[-1]).transpose(1, 2).transpose(0, 1)
+        ranges = self.config.getRanges(image_meta_data[-1]).transpose(1, 2).transpose(0, 1)
         zeros = torch.zeros(3, (self.config.IMAGE_MAX_DIM - self.config.IMAGE_MIN_DIM) // 2, self.config.IMAGE_MAX_DIM).cuda()
         ranges = torch.cat([zeros, ranges, zeros], dim=1)
         ranges = torch.nn.functional.interpolate(ranges.unsqueeze(0), size=(160, 160), mode='bilinear')
@@ -1734,10 +1628,10 @@ class MaskRCNN(nn.Module):
 
         elif mode == 'training':
 
-            gt_class_ids = input[2]
-            gt_boxes = input[3]
-            gt_masks = input[4]
-            gt_parameters = input[5]
+            gt_class_ids = image_meta_data[2]
+            gt_boxes = image_meta_data[3]
+            gt_masks = image_meta_data[4]
+            gt_parameters = image_meta_data[5]
             
             ## Normalize coordinates
             h, w = self.config.IMAGE_SHAPE[:2]
@@ -1777,10 +1671,10 @@ class MaskRCNN(nn.Module):
             return [rpn_class_logits, rpn_bbox, target_class_ids, mrcnn_class_logits, target_deltas, mrcnn_bbox, target_mask, mrcnn_mask, target_parameters, mrcnn_parameters, rois, depth_np]
         
         elif mode in ['training_detection', 'inference_detection']:
-            gt_class_ids = input[2]
-            gt_boxes = input[3]
-            gt_masks = input[4]
-            gt_parameters = input[5]
+            gt_class_ids = image_meta_data[2]
+            gt_boxes = image_meta_data[3]
+            gt_masks = image_meta_data[4]
+            gt_parameters = image_meta_data[5]
             
             ## Normalize coordinates
             h, w = self.config.IMAGE_SHAPE[:2]

@@ -3,6 +3,7 @@ import torch.nn as nn
 from .midas.midas_net import MidasNet
 from .yolo.yolo_decoder import YoloDecoder
 from .yolo.yolo_decoder import load_yolo_decoder_weights
+from .planercnn.planercnn_decoder import MaskRCNN
 
 class DoepdNet(torch.nn.Module):
     midas_encoder_layered_output = []
@@ -14,22 +15,38 @@ class DoepdNet(torch.nn.Module):
         self.midas_net = MidasNet(midas_weights)
         
         midas_encoder_filters = [256, 256, 512, 512, 1024] # output filters from each layer of resnext 101
-                    
-        # Each of the three layers in yolo takes input from last 3 layers of midas    
-        self.yolo_decoder = YoloDecoder(midas_encoder_filters, (image_size, image_size))
-        self.yolo_layers = self.yolo_decoder.yolo_layers
+        self.yolo_decoder = None
+        self.yolo_layers = None
+        self.midas_layer_2_to_yolo_small_obj = None
+        self.midas_layer_3_to_yolo_med_obj = None
+        self.midas_layer_4_to_yolo_med_obj = None
+        self.midas_layer_4_to_yolo_large_obj = None
+        self.plane_rcnn_decoder = None
         
-        
-        self.midas_layer_2_to_yolo_small_obj = nn.Conv2d(in_channels= 512, out_channels = 256, kernel_size = 1, padding = 0)
-        self.midas_layer_3_to_yolo_med_obj = nn.Conv2d(in_channels= 1024, out_channels = 512, kernel_size = 1, padding = 0)
-        self.midas_layer_4_to_yolo_med_obj = nn.Conv2d(in_channels= 2048, out_channels = 512, kernel_size = 1, padding = 0)
-        self.midas_layer_4_to_yolo_large_obj = nn.Conv2d(in_channels= 2048, out_channels = 1024, kernel_size = 1, padding = 0)
-        
+        if self.train_mode == 'yolo':
+            # Each of the three layers in yolo takes input from last 3 layers of midas
+            self.yolo_decoder = YoloDecoder(midas_encoder_filters, (image_size, image_size))
+            self.yolo_layers = self.yolo_decoder.yolo_layers
+            self.midas_layer_2_to_yolo_small_obj = nn.Conv2d(in_channels= 512, out_channels = 256, kernel_size = 1, padding = 0)
+            self.midas_layer_3_to_yolo_med_obj = nn.Conv2d(in_channels= 1024, out_channels = 512, kernel_size = 1, padding = 0)
+            self.midas_layer_4_to_yolo_med_obj = nn.Conv2d(in_channels= 2048, out_channels = 512, kernel_size = 1, padding = 0)
+            self.midas_layer_4_to_yolo_large_obj = nn.Conv2d(in_channels= 2048, out_channels = 1024, kernel_size = 1, padding = 0)
+        elif self.train_mode == 'planercnn':
+            import sys
+            sys.argv=['']
+            del sys
+            
+            from utils.options import parse_args
+            args = parse_args()
+            config = PlaneConfig(args)
+            self.plane_rcnn_decoder = MaskRCNN(config)
+            
         # Freeze training for midas (encoder & decoder)
         for param in self.midas_net.parameters():
             param.requires_grad = False
     
-    def forward(self, x, augment=False):
+    def forward(self, x, plane_rcnn_image_meta = None, augment=False, mode='inference_detection', use_nms=2, use_refinement=True):
+    
         encoder_layered_outputs = self.midas_net.forward_encoder(x)
         
         if self.train_mode == 'yolo':
@@ -41,6 +58,9 @@ class DoepdNet(torch.nn.Module):
             return self.yolo_decoder.forward([yolo_small, yolo_med_before_upsample, yolo_med, yolo_large], augment=augment)
         elif self.train_mode == 'midas':
             return self.midas_net.forward_decoder(encoder_layered_outputs)
+        elif self.train_mode == 'planercnn':
+            return self.plane_rcnn_decoder.predict(x, plane_rcnn_image_meta, 'inference', encoder_layered_outputs = encoder_layered_outputs)
+            
     
 def load_doepd_weights(self, device='cpu', scratch=False, train_mode = False, load_mode='all'):
     yolo_weights = []
