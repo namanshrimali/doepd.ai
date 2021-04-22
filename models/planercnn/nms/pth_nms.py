@@ -1,5 +1,6 @@
-import torch
 from ._ext import nms
+
+import torch
 import numpy as np
 
 def pth_nms(dets, thresh):
