@@ -17,16 +17,16 @@ import cv2
 import copy
 import glob
 
-from models.model import *
-from models.refinement_net import RefineModel
-from models.modules import *
+from models.planercnn.planercnn_decoder import *
+from models.planercnn.refinement_net import RefineModel
+from models.planercnn.modules import *
 from datasets.plane_stereo_dataset import PlaneDataset
 from datasets.inference_dataset import InferenceDataset
 from datasets.nyu_dataset import NYUDataset
 from utils.planer_cnn_utils import *
 from utils.visualize_utils import *
 from utils.evaluate_utils import *
-from plane_utils import *
+from utils.plane_utils import *
 from utils.options import parse_args
 from utils.config import InferenceConfig
 from models.doepd_net import DoepdNet

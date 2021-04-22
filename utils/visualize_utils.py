@@ -12,8 +12,8 @@ import numpy as np
 from skimage.measure import find_contours
 import cv2
 
-from models.model import detection_layer, unmold_detections
-from models.modules import *
+from models.planercnn.planercnn_decoder import detection_layer, unmold_detections
+from models.planercnn.modules import *
 from utils import *
 
 
