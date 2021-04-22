@@ -9,7 +9,7 @@ import glob
 import cv2
 import os
 
-from utils import *
+from utils.planer_cnn_utils import *
 from datasets.plane_dataset import *
 
 class InferenceDataset(Dataset):

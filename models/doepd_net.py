@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from .midas.midas_net import MidasNet
 
 class DoepdNet(torch.nn.Module):
     midas_encoder_layered_output = []
@@ -20,7 +21,6 @@ class DoepdNet(torch.nn.Module):
         self.plane_rcnn_decoder = None
         
         if self.train_mode == 'yolo':
-            from .midas.midas_net import MidasNet
             from .yolo.yolo_decoder import YoloDecoder
             from .yolo.yolo_decoder import load_yolo_decoder_weights
             
