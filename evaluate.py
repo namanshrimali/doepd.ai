@@ -23,12 +23,12 @@ from models.modules import *
 from datasets.plane_stereo_dataset import PlaneDataset
 from datasets.inference_dataset import InferenceDataset
 from datasets.nyu_dataset import NYUDataset
-from utils import *
-from visualize_utils import *
-from evaluate_utils import *
+from utils.planer_cnn_utils import *
+from utils.visualize_utils import *
+from utils.evaluate_utils import *
 from plane_utils import *
-from options import parse_args
-from config import InferenceConfig
+from utils.options import parse_args
+from utils.config import InferenceConfig
 from models.doepd_net import DoepdNet
 
 class PlaneRCNNDetector():
