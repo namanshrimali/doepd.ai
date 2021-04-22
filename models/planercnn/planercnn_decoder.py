@@ -21,8 +21,8 @@ from torch.autograd import Variable
 
 from utils.planer_cnn_utils import *
 from .modules import *
-from .nms.nms_wrapper import nms
-from .roialign.roi_align.crop_and_resize import CropAndResizeFunction
+# from .nms.nms_wrapper import nms
+# from .roialign.roi_align.crop_and_resize import CropAndResizeFunction
 import cv2
 
 ############################################################
@@ -226,7 +226,9 @@ def proposal_layer(inputs, proposal_count, nms_threshold, anchors, config=None):
     ## for small objects, so we're skipping it.
 
     ## Non-max suppression
-    keep = nms(torch.cat((boxes, scores.unsqueeze(1)), 1).data, nms_threshold)
+    from torchvision.ops import nms
+    keep = nms(boxes, scores, nms_threshold)
+    # keep = nms(torch.cat((boxes, scores.unsqueeze(1)), 1).data, nms_threshold)
 
     keep = keep[:proposal_count]
     boxes = boxes[keep, :]
