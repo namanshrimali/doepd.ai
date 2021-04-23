@@ -71,34 +71,49 @@ def load_doepd_weights(self, device='cpu', scratch=False, train_mode = False, lo
         
     if not scratch:
         # loading yolo weights
-        yolo_weight_file = None
-        # planer_cnn_file = None
-        
-        # loading yolo weights from last/best based on train_mode. Will update to add planercnn weights
-        if train_mode:
-            yolo_weight_file = 'weights/doepd_yolo_last.pt'
-        else:
-            yolo_weight_file = 'weights/doepd_yolo_best.pt'
             
-        chkpt = torch.load(yolo_weight_file, map_location = "cpu")
+        if self.train_mode == 'yolo':
+            yolo_weight_file =  None
+            # loading yolo weights from last/best based on train_mode. Will update to add planercnn weights
+            if train_mode:
+                yolo_weight_file = 'weights/doepd_yolo_last.pt'
+            else:
+                yolo_weight_file = 'weights/doepd_yolo_best.pt'
             
-        num_items = 0
-        for k, v in chkpt['model'].items():
-            if num_items>=666 and num_items<756:
-                if not k.endswith('num_batches_tracked'):
-                    yolo_weights.append(v.detach().numpy())
-            num_items = num_items + 1 
-                
-        self.midas_layer_2_to_yolo_small_obj.weight = torch.nn.Parameter(chkpt['model']['midas_layer_2_to_yolo_small_obj.weight'])
-        self.midas_layer_2_to_yolo_small_obj.bias = torch.nn.Parameter(chkpt['model']['midas_layer_2_to_yolo_small_obj.bias'])
-        self.midas_layer_3_to_yolo_med_obj.weight = torch.nn.Parameter(chkpt['model']['midas_layer_3_to_yolo_med_obj.weight'])
-        self.midas_layer_3_to_yolo_med_obj.bias = torch.nn.Parameter(chkpt['model']['midas_layer_3_to_yolo_med_obj.bias'])
-        self.midas_layer_4_to_yolo_med_obj.weight = torch.nn.Parameter(chkpt['model']['midas_layer_4_to_yolo_med_obj.weight'])
-        self.midas_layer_4_to_yolo_med_obj.bias = torch.nn.Parameter(chkpt['model']['midas_layer_4_to_yolo_med_obj.bias'])
-        self.midas_layer_4_to_yolo_large_obj.weight = torch.nn.Parameter(chkpt['model']['midas_layer_4_to_yolo_large_obj.weight'])
-        self.midas_layer_4_to_yolo_large_obj.bias = torch.nn.Parameter(chkpt['model']['midas_layer_4_to_yolo_large_obj.bias'])
+            chkpt = torch.load(yolo_weight_file, map_location = "cpu")    
+            num_items = 0
             
+            for k, v in chkpt['model'].items():
+                if num_items>=666 and num_items<756:
+                    if not k.endswith('num_batches_tracked'):
+                        yolo_weights.append(v.detach().numpy())
+                num_items = num_items + 1 
+            
+            load_yolo_decoder_weights(self.yolo_decoder, yolo_weights)
                     
+            self.midas_layer_2_to_yolo_small_obj.weight = torch.nn.Parameter(chkpt['model']['midas_layer_2_to_yolo_small_obj.weight'])
+            self.midas_layer_2_to_yolo_small_obj.bias = torch.nn.Parameter(chkpt['model']['midas_layer_2_to_yolo_small_obj.bias'])
+            self.midas_layer_3_to_yolo_med_obj.weight = torch.nn.Parameter(chkpt['model']['midas_layer_3_to_yolo_med_obj.weight'])
+            self.midas_layer_3_to_yolo_med_obj.bias = torch.nn.Parameter(chkpt['model']['midas_layer_3_to_yolo_med_obj.bias'])
+            self.midas_layer_4_to_yolo_med_obj.weight = torch.nn.Parameter(chkpt['model']['midas_layer_4_to_yolo_med_obj.weight'])
+            self.midas_layer_4_to_yolo_med_obj.bias = torch.nn.Parameter(chkpt['model']['midas_layer_4_to_yolo_med_obj.bias'])
+            self.midas_layer_4_to_yolo_large_obj.weight = torch.nn.Parameter(chkpt['model']['midas_layer_4_to_yolo_large_obj.weight'])
+            self.midas_layer_4_to_yolo_large_obj.bias = torch.nn.Parameter(chkpt['model']['midas_layer_4_to_yolo_large_obj.bias'])
+            
+        elif self.train_mode == 'planercnn':
+            planer_cnn_file = 'weights/planer_checkpoint.pth'
+            chkpt = torch.load(planer_cnn_file, map_location = "cpu")    
+            plane_rcnn_weights = []
+            num_items = 0
+            
+            for k, v in chkpt.items():
+                if num_items>=728:
+                    # eg k = depth.deconv1.2.running_var
+                    # we need plane_rcnn_decoder.depth.deconv1.2.running_var
+                    self.plane_rcnn_decoder.state_dict()[f'plane_rcnn_decoder.{k}'] = torch.nn.Parameter(v)
+                num_items = num_items + 1 
+            
+            
             
     else:
          # loading yolo_best weights : got from 300 epochs trained in Assignment 13
@@ -114,7 +129,7 @@ def load_doepd_weights(self, device='cpu', scratch=False, train_mode = False, lo
                     if v.shape[0]!=255:
                         yolo_weights.append(v.detach().numpy())
             num_items = num_items + 1
-            
-    load_yolo_decoder_weights(self.yolo_decoder, yolo_weights)
+        
+        load_yolo_decoder_weights(self.yolo_decoder, yolo_weights)
     
     return chkpt

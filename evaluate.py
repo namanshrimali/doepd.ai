@@ -29,10 +29,10 @@ from utils.evaluate_utils import *
 from utils.plane_utils import *
 from utils.options import parse_args
 from utils.config import InferenceConfig
-from models.doepd_net import DoepdNet
+from models.doepd_net import DoepdNet, load_doepd_weights
 
 class PlaneRCNNDetector():
-    def __init__(self, options, config, modelType, checkpoint_dir=''):
+    def __init__(self, options, config, modelType, checkpoint_dir='weights'):
         self.options = options
         self.config = config
         self.modelType = modelType
@@ -51,13 +51,16 @@ class PlaneRCNNDetector():
         ## Indicates that the refinement network is trained separately        
         separate = modelType == 'refine'
 
-        if not separate:
-            if options.startEpoch >= 0:
-                self.model.load_state_dict(torch.load(checkpoint_dir + '/checkpoint_' + str(options.startEpoch) + '.pth'))
-            else:
-                self.model.load_state_dict(torch.load(checkpoint_dir + '/checkpoint.pth'))
-                pass
-            pass
+        # if not separate:
+        #     if options.startEpoch >= 0:
+        #         self.model.load_state_dict(torch.load(checkpoint_dir + '/checkpoint_' + str(options.startEpoch) + '.pth'))
+        #     else:
+                
+        #         self.model.load_state_dict(torch.load(checkpoint_dir + '/checkpoint.pth'))
+        #         pass
+        #     pass
+        
+        load_doepd_weights(self.model, device="cuda")
 
         if 'refine' in modelType or 'final' in modelType:
             self.refine_model = RefineModel(options)
@@ -69,7 +72,7 @@ class PlaneRCNNDetector():
                 self.refine_model.load_state_dict(state_dict)
                 pass
             else:
-                self.model.load_state_dict(torch.load('checkpoint/pair_' + options.anchorType + '_pair/checkpoint.pth'))
+                # self.model.load_state_dict(torch.load('checkpoint/pair_' + options.anchorType + '_pair/checkpoint.pth'))
                 self.refine_model.load_state_dict(torch.load('checkpoint/instance_normal_refine_mask_softmax_valid/checkpoint_refine.pth'))
                 pass
             pass
