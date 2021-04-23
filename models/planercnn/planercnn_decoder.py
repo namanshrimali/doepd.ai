@@ -120,9 +120,9 @@ class FPN(nn.Module):
             p3_out = self.P3_conv1(encoder_layered_outputs[1]) + F.upsample(p4_out, scale_factor=2, mode='bilinear') #c3-> resnet layer2
             p2_out = self.P2_conv1(encoder_layered_outputs[0]) + F.upsample(p3_out, scale_factor=2, mode='bilinear') #c2-> resnet layer1
         else:
-            p4_out = self.P4_conv1(c4_out) + F.upsample(p5_out, scale_factor=2)
-            p3_out = self.P3_conv1(c3_out) + F.upsample(p4_out, scale_factor=2)
-            p2_out = self.P2_conv1(c2_out) + F.upsample(p3_out, scale_factor=2)
+            p4_out = self.P4_conv1(encoder_layered_outputs[2]) + F.upsample(p5_out, scale_factor=2)
+            p3_out = self.P3_conv1(encoder_layered_outputs[1]) + F.upsample(p4_out, scale_factor=2)
+            p2_out = self.P2_conv1(encoder_layered_outputs[0]) + F.upsample(p3_out, scale_factor=2)
             pass
 
         p5_out = self.P5_conv2(p5_out)

@@ -12,7 +12,7 @@ import time
 import os
 import cv2
 import sys
-import utils
+from utils.planer_cnn_utils import *
 from datasets.scannet_scene import ScanNetScene
 
 class PlaneDatasetSingle(Dataset):
@@ -78,7 +78,7 @@ class PlaneDatasetSingle(Dataset):
 
         print('num images', len(self.sceneImageIndices))
         
-        self.anchors = utils.generate_pyramid_anchors(config.RPN_ANCHOR_SCALES,
+        self.anchors = generate_pyramid_anchors(config.RPN_ANCHOR_SCALES,
                                                       config.RPN_ANCHOR_RATIOS,
                                                       config.BACKBONE_SHAPES,
                                                       config.BACKBONE_STRIDES,
@@ -304,7 +304,7 @@ class PlaneDatasetSingle(Dataset):
 
         ## Add to batch
         rpn_match = rpn_match[:, np.newaxis]
-        image = utils.mold_image(image.astype(np.float32), self.config)
+        image = mold_image(image.astype(np.float32), self.config)
 
         depth = np.concatenate([np.zeros((80, 640)), depth, np.zeros((80, 640))], axis=0)
         segmentation = np.concatenate([np.full((80, 640), fill_value=-1, dtype=np.int32), segmentation, np.full((80, 640), fill_value=-1, dtype=np.int32)], axis=0)        
@@ -346,7 +346,7 @@ class PlaneDatasetSingle(Dataset):
         
             rotation = transformation[:3, :3]
             translation = transformation[:3, 3]
-            axis, angle = utils.rotationMatrixToAxisAngle(rotation)
+            axis, angle = rotationMatrixToAxisAngle(rotation)
             pose = np.concatenate([translation, axis * angle], axis=0).astype(np.float32)
             info.append(pose)
             info.append(scene.scenePath + ' ' + str(imageIndex))
@@ -399,15 +399,15 @@ class PlaneDatasetSingle(Dataset):
             self.anchor_planes_d = kmeans_d.cluster_centers_            
 
             if visualize:
-                color_map = utils.ColorPalette(max(num_anchor_planes_N, num_anchor_planes_d)).getColorMap()
+                color_map = ColorPalette(max(num_anchor_planes_N, num_anchor_planes_d)).getColorMap()
                 normals_rotated = normals.copy()
                 normals_rotated[:, 1] = normals[:, 2]
                 normals_rotated[:, 2] = -normals[:, 1]
                 plane_cloud = np.concatenate([normals_rotated, color_map[kmeans_N.labels_]], axis=-1)
-                utils.writePointCloud('test/anchor_planes/anchor_planes_N.ply', plane_cloud)
+                writePointCloud('test/anchor_planes/anchor_planes_N.ply', plane_cloud)
 
                 plane_cloud = np.concatenate([all_planes, color_map[kmeans_d.labels_]], axis=-1)
-                utils.writePointCloud('test/anchor_planes/anchor_planes_d.ply', plane_cloud)
+                writePointCloud('test/anchor_planes/anchor_planes_d.ply', plane_cloud)
 
                 width = 500
                 height = 500
@@ -454,13 +454,13 @@ def load_image_gt(config, image_id, image, depth, mask, class_ids, parameters, a
     """
     ## Load image and mask
     shape = image.shape
-    image, window, scale, padding = utils.resize_image(
+    image, window, scale, padding = resize_image(
         image,
         min_dim=config.IMAGE_MAX_DIM,
         max_dim=config.IMAGE_MAX_DIM,
         padding=config.IMAGE_PADDING)
 
-    mask = utils.resize_mask(mask, scale, padding)
+    mask = resize_mask(mask, scale, padding)
     
     ## Random horizontal flips.
     if augment and False:
@@ -474,25 +474,25 @@ def load_image_gt(config, image_id, image, depth, mask, class_ids, parameters, a
     ## Bounding boxes. Note that some boxes might be all zeros
     ## if the corresponding mask got cropped out.
     ## bbox: [num_instances, (y1, x1, y2, x2)]
-    bbox = utils.extract_bboxes(mask)
+    bbox = extract_bboxes(mask)
     ## Resize masks to smaller size to reduce memory usage
     if use_mini_mask:
-        mask = utils.minimize_mask(bbox, mask, config.MINI_MASK_SHAPE)
+        mask = minimize_mask(bbox, mask, config.MINI_MASK_SHAPE)
         pass
 
     active_class_ids = np.ones(config.NUM_CLASSES, dtype=np.int32)
     ## Image meta data
-    image_meta = utils.compose_image_meta(image_id, shape, window, active_class_ids)
+    image_meta = compose_image_meta(image_id, shape, window, active_class_ids)
 
     if config.NUM_PARAMETER_CHANNELS > 0:
         if config.OCCLUSION:
-            depth = utils.resize_mask(depth, scale, padding)            
-            mask_visible = utils.minimize_mask(bbox, depth, config.MINI_MASK_SHAPE)
+            depth = resize_mask(depth, scale, padding)            
+            mask_visible = minimize_mask(bbox, depth, config.MINI_MASK_SHAPE)
             mask = np.stack([mask, mask_visible], axis=-1)
         else:
             depth = np.expand_dims(depth, -1)
-            depth = utils.resize_mask(depth, scale, padding).squeeze(-1)
-            depth = utils.minimize_depth(bbox, depth, config.MINI_MASK_SHAPE)
+            depth = resize_mask(depth, scale, padding).squeeze(-1)
+            depth = minimize_depth(bbox, depth, config.MINI_MASK_SHAPE)
             mask = np.stack([mask, depth], axis=-1)
             pass
         pass
@@ -523,7 +523,7 @@ def build_rpn_targets(image_shape, anchors, gt_class_ids, gt_boxes, config):
     no_crowd_bool = np.ones([anchors.shape[0]], dtype=bool)
     
     ## Compute overlaps [num_anchors, num_gt_boxes]
-    overlaps = utils.compute_overlaps(anchors, gt_boxes)
+    overlaps = compute_overlaps(anchors, gt_boxes)
 
     ## Match anchors to GT Boxes
     ## If an anchor overlaps a GT box with IoU >= 0.7 then it's positive.

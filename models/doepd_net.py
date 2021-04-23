@@ -110,7 +110,7 @@ def load_doepd_weights(self, device='cpu', scratch=False, train_mode = False, lo
                 if num_items>=728:
                     # eg k = depth.deconv1.2.running_var
                     # we need plane_rcnn_decoder.depth.deconv1.2.running_var
-                    self.plane_rcnn_decoder.state_dict()[f'plane_rcnn_decoder.{k}'] = torch.nn.Parameter(v)
+                    self.plane_rcnn_decoder.state_dict()[f'plane_rcnn_decoder.{k}'] = v.data
                 num_items = num_items + 1 
             
             
