@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from .midas.midas_net import MidasNet
-
+from utils.config import PlaneConfig
 class DoepdNet(torch.nn.Module):
     midas_encoder_layered_output = []
     
