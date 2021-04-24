@@ -325,7 +325,15 @@ def pyramid_roi_align(inputs, pool_size, image_shape):
         if level_boxes.is_cuda:
             ind = ind.cuda()
         feature_maps[i] = feature_maps[i].unsqueeze(0)  #CropAndResizeFunction needs batch dimension
-        pooled_features = CropAndResizeFunction(pool_size, pool_size, 0)(feature_maps[i], level_boxes, ind)
+        # TODO Use new CropAndResizeFunction, with 
+        # 1. feature_maps[i] as image
+        # 2. level_boxes as boxes
+        # 3. ind as box_indices (box_ind)
+        # 4. (pool_size, pool_size) as crop_size
+        # eg CropAndResizeFunction.apply(image, boxes, box_ind, self.crop_height, self.crop_width, self.extrapolation_value)
+        # pooled_features = CropAndResizeFunction(pool_size, pool_size, 0)(feature_maps[i], level_boxes, ind)
+        import torchvision.ops.roi_align
+        pooled_features = roi_align(input = feature_maps[i], boxes = level_boxes, output_size = (pool_size, pool_size))
         pooled.append(pooled_features)
 
     ## Pack pooled features into one tensor
