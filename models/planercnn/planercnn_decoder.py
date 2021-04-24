@@ -332,7 +332,7 @@ def pyramid_roi_align(inputs, pool_size, image_shape):
         # 4. (pool_size, pool_size) as crop_size
         # eg CropAndResizeFunction.apply(image, boxes, box_ind, self.crop_height, self.crop_width, self.extrapolation_value)
         # pooled_features = CropAndResizeFunction(pool_size, pool_size, 0)(feature_maps[i], level_boxes, ind)
-        import torchvision.ops.roi_align
+        from torchvision.ops import roi_align
         pooled_features = roi_align(input = feature_maps[i], boxes = level_boxes, output_size = (pool_size, pool_size))
         pooled.append(pooled_features)
 
@@ -901,7 +901,9 @@ class Classifier(nn.Module):
             pass
 
     def forward(self, x, rois, ranges, pool_features=True, gt=None):
-        x = pyramid_roi_align([rois] + x, self.pool_size, self.image_shape)
+        from torchvision.ops import roi_align
+        x = roi_align(input = x, boxes = [rois], output_size = (self.pool_size, self.pool_size))
+        # x = pyramid_roi_align([rois] + x, self.pool_size, self.image_shape)
         ranges = coordinates_roi([rois] + [ranges, ], self.pool_size, self.image_shape)
         roi_features = torch.cat([x, ranges], dim=1)
         x = self.conv1(roi_features)
