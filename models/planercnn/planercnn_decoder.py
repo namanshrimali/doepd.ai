@@ -18,11 +18,9 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data
 from torch.autograd import Variable
-
+from torchvision.ops import roi_align
 from utils.planer_cnn_utils import *
 from .modules import *
-# from .nms.nms_wrapper import nms
-# from .roialign.roi_align.crop_and_resize import CropAndResizeFunction
 import cv2
 
 ############################################################
@@ -324,16 +322,9 @@ def pyramid_roi_align(inputs, pool_size, image_shape):
         ind = Variable(torch.zeros(level_boxes.size()[0]),requires_grad=False).int()
         if level_boxes.is_cuda:
             ind = ind.cuda()
-        feature_maps[i] = feature_maps[i].unsqueeze(0)  #CropAndResizeFunction needs batch dimension
-        # TODO Use new CropAndResizeFunction, with 
-        # 1. feature_maps[i] as image
-        # 2. level_boxes as boxes
-        # 3. ind as box_indices (box_ind)
-        # 4. (pool_size, pool_size) as crop_size
-        # eg CropAndResizeFunction.apply(image, boxes, box_ind, self.crop_height, self.crop_width, self.extrapolation_value)
-        # pooled_features = CropAndResizeFunction(pool_size, pool_size, 0)(feature_maps[i], level_boxes, ind)
-        from torchvision.ops import roi_align
-        pooled_features = roi_align(input = feature_maps[i], boxes = level_boxes, output_size = (pool_size, pool_size))
+        feature_maps[i] = feature_maps[i].unsqueeze(0)
+        
+        pooled_features = roi_align(input = feature_maps[i], boxes = [level_boxes], output_size = (pool_size, pool_size))
         pooled.append(pooled_features)
 
     ## Pack pooled features into one tensor
@@ -391,9 +382,8 @@ def coordinates_roi(inputs, pool_size, image_shape):
     ind = Variable(torch.zeros(boxes.size()[0]),requires_grad=False).int()
     if boxes.is_cuda:
         ind = ind.cuda()
-    cooridnates = cooridnates.unsqueeze(0)  ## CropAndResizeFunction needs batch dimension
-    pooled_features = CropAndResizeFunction(pool_size, pool_size, 0)(cooridnates, boxes, ind)
-
+    cooridnates = cooridnates.unsqueeze(0)
+    pooled_features = roi_align(input = cooridnates, boxes = [boxes], output_size = (pool_size, pool_size))
     return pooled_features
 
 
@@ -532,12 +522,16 @@ def detection_target_layer(proposals, gt_class_ids, gt_boxes, gt_masks, gt_param
             box_ids = box_ids.cuda()
 
         if config.NUM_PARAMETER_CHANNELS > 0:
-            masks = Variable(CropAndResizeFunction(config.MASK_SHAPE[0], config.MASK_SHAPE[1], 0)(roi_masks[:, :, :, 0].contiguous().unsqueeze(1), boxes, box_ids).data, requires_grad=False).squeeze(1)
+            
+            roi_align(input = roi_masks[:, :, :, 0].contiguous().unsqueeze(1), boxes = [boxes], output_size = (config.MASK_SHAPE[0], config.MASK_SHAPE[1]))
+            
+            masks = Variable(roi_align(input = roi_masks[:, :, :, 1].contiguous().unsqueeze(1), boxes = [boxes], output_size = (config.MASK_SHAPE[0], config.MASK_SHAPE[1])).data, requires_grad=False).squeeze(1)
             masks = torch.round(masks)
-            parameters = Variable(CropAndResizeFunction(config.MASK_SHAPE[0], config.MASK_SHAPE[1], 0)(roi_masks[:, :, :, 1].contiguous().unsqueeze(1), boxes, box_ids).data, requires_grad=False).squeeze(1)
+            parameters = Variable(roi_align(input = roi_masks[:, :, :, 1].contiguous().unsqueeze(1), boxes = [boxes], output_size = (config.MASK_SHAPE[0], config.MASK_SHAPE[1])).data, requires_grad=False).squeeze(1)
             masks = torch.stack([masks, parameters], dim=-1)
         else:
-            masks = Variable(CropAndResizeFunction(config.MASK_SHAPE[0], config.MASK_SHAPE[1], 0)(roi_masks.unsqueeze(1), boxes, box_ids).data, requires_grad=False).squeeze(1)            
+            
+            masks = Variable(roi_align(input = roi_masks.unsqueeze(1), boxes = [boxes], output_size = (config.MASK_SHAPE[0], config.MASK_SHAPE[1])).data, requires_grad=False).squeeze(1)            
             masks = torch.round(masks)            
             pass
 
@@ -801,6 +795,7 @@ def detection_layer(config, rois, mrcnn_class, mrcnn_bbox, mrcnn_parameter, imag
     rois = rois.squeeze(0)
 
     _, _, window, _ = parse_image_meta(image_meta)
+
     window = window[0]
     if len(mrcnn_class) == 0:
         if return_indices:
@@ -901,9 +896,7 @@ class Classifier(nn.Module):
             pass
 
     def forward(self, x, rois, ranges, pool_features=True, gt=None):
-        from torchvision.ops import roi_align
-        x = roi_align(input = x, boxes = [rois], output_size = (self.pool_size, self.pool_size))
-        # x = pyramid_roi_align([rois] + x, self.pool_size, self.image_shape)
+        x = pyramid_roi_align([rois] + x, self.pool_size, self.image_shape)
         ranges = coordinates_roi([rois] + [ranges, ], self.pool_size, self.image_shape)
         roi_features = torch.cat([x, ranges], dim=1)
         x = self.conv1(roi_features)
@@ -928,7 +921,7 @@ class Classifier(nn.Module):
         
         if self.debug:
             pass
-        
+                
         mrcnn_parameters = mrcnn_parameters.view(mrcnn_parameters.size()[0], -1, self.num_parameters)
         if pool_features:
             return [mrcnn_class_logits, mrcnn_probs, mrcnn_bbox, mrcnn_parameters, roi_features]
@@ -1816,7 +1809,8 @@ class MaskRCNN(nn.Module):
                     box_ids = Variable(torch.arange(roi_gt_masks.size()[0]), requires_grad=False).int()
                     if self.config.GPU_COUNT:
                         box_ids = box_ids.cuda()
-                    roi_gt_masks = Variable(CropAndResizeFunction(self.config.FINAL_MASK_SHAPE[0], self.config.FINAL_MASK_SHAPE[1], 0)(roi_gt_masks.unsqueeze(1), boxes, box_ids).data, requires_grad=False)
+                        
+                    roi_gt_masks = Variable(roi_align(input = roi_gt_masks.unsqueeze(1), boxes = [boxes], output_size = (self.config.FINAL_MASK_SHAPE[0], self.config.FINAL_MASK_SHAPE[1])).data, requires_grad=False)
                     roi_gt_masks = roi_gt_masks.squeeze(1)
 
                     roi_gt_masks = torch.round(roi_gt_masks)
