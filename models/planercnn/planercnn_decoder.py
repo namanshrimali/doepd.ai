@@ -1535,7 +1535,7 @@ class MaskRCNN(nn.Module):
 
     def predict(self, images, image_meta_data, mode, encoder_layered_outputs = None, use_nms=1, use_refinement=False, return_feature_map=False):
         molded_images = images
-        image_metas = image_meta_data[1]
+        image_metas = image_meta_data[0]
 
         if mode == 'inference':
             self.eval()
@@ -1633,10 +1633,10 @@ class MaskRCNN(nn.Module):
 
         elif mode == 'training':
 
-            gt_class_ids = image_meta_data[2]
-            gt_boxes = image_meta_data[3]
-            gt_masks = image_meta_data[4]
-            gt_parameters = image_meta_data[5]
+            gt_class_ids = image_meta_data[1]
+            gt_boxes = image_meta_data[2]
+            gt_masks = image_meta_data[3]
+            gt_parameters = image_meta_data[4]
             
             ## Normalize coordinates
             h, w = self.config.IMAGE_SHAPE[:2]
@@ -1676,10 +1676,10 @@ class MaskRCNN(nn.Module):
             return [rpn_class_logits, rpn_bbox, target_class_ids, mrcnn_class_logits, target_deltas, mrcnn_bbox, target_mask, mrcnn_mask, target_parameters, mrcnn_parameters, rois, depth_np]
         
         elif mode in ['training_detection', 'inference_detection']:
-            gt_class_ids = image_meta_data[2]
-            gt_boxes = image_meta_data[3]
-            gt_masks = image_meta_data[4]
-            gt_parameters = image_meta_data[5]
+            gt_class_ids = image_meta_data[1]
+            gt_boxes = image_meta_data[2]
+            gt_masks = image_meta_data[3]
+            gt_parameters = image_meta_data[4]
             
             ## Normalize coordinates
             h, w = self.config.IMAGE_SHAPE[:2]
