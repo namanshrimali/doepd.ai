@@ -450,6 +450,11 @@ def detection_target_layer(proposals, gt_class_ids, gt_boxes, gt_masks, gt_param
                  Masks cropped to bbox boundaries and resized to neural
                  network output size.
     """
+    
+    # TODO check inputs, remove squeeze if size[0] is not 1
+    print("---------------")
+    print(gt_class_ids.size())
+    print("---------------")
 
     ## Currently only supports batchsize 1
     proposals = proposals.squeeze(0)
@@ -521,16 +526,12 @@ def detection_target_layer(proposals, gt_class_ids, gt_boxes, gt_masks, gt_param
         if config.GPU_COUNT:
             box_ids = box_ids.cuda()
 
-        if config.NUM_PARAMETER_CHANNELS > 0:
-            
-            roi_align(input = roi_masks[:, :, :, 0].contiguous().unsqueeze(1), boxes = [boxes], output_size = (config.MASK_SHAPE[0], config.MASK_SHAPE[1]))
-            
+        if config.NUM_PARAMETER_CHANNELS > 0:            
             masks = Variable(roi_align(input = roi_masks[:, :, :, 1].contiguous().unsqueeze(1), boxes = [boxes], output_size = (config.MASK_SHAPE[0], config.MASK_SHAPE[1])).data, requires_grad=False).squeeze(1)
             masks = torch.round(masks)
             parameters = Variable(roi_align(input = roi_masks[:, :, :, 1].contiguous().unsqueeze(1), boxes = [boxes], output_size = (config.MASK_SHAPE[0], config.MASK_SHAPE[1])).data, requires_grad=False).squeeze(1)
             masks = torch.stack([masks, parameters], dim=-1)
         else:
-            
             masks = Variable(roi_align(input = roi_masks.unsqueeze(1), boxes = [boxes], output_size = (config.MASK_SHAPE[0], config.MASK_SHAPE[1])).data, requires_grad=False).squeeze(1)            
             masks = torch.round(masks)            
             pass
