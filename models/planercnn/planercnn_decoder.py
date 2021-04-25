@@ -466,9 +466,10 @@ def detection_target_layer(proposals, gt_class_ids, gt_boxes, gt_masks, gt_param
 
     ## Determine postive and negative ROIs
     roi_iou_max = torch.max(overlaps, dim=1)[0]
-
+    
     ## 1. Positive ROIs are those with >= 0.5 IoU with a GT box
     positive_roi_bool = roi_iou_max >= 0.5
+ 
     #print('positive count', positive_roi_bool.sum())
 
     ## Subsample ROIs. Aim for 33% positive
@@ -488,6 +489,7 @@ def detection_target_layer(proposals, gt_class_ids, gt_boxes, gt_masks, gt_param
 
         ## Assign positive ROIs to GT boxes.
         positive_overlaps = overlaps[positive_indices.data,:]
+
         roi_gt_box_assignment = torch.max(positive_overlaps, dim=1)[1]
         roi_gt_boxes = gt_boxes[roi_gt_box_assignment.data,:]
         roi_gt_class_ids = gt_class_ids[roi_gt_box_assignment.data]
@@ -501,7 +503,9 @@ def detection_target_layer(proposals, gt_class_ids, gt_boxes, gt_masks, gt_param
         deltas /= std_dev
 
         ## Assign positive ROIs to GT masks
+
         roi_masks = gt_masks[roi_gt_box_assignment.data]
+        
 
         ## Compute mask targets
         boxes = positive_rois
@@ -540,21 +544,15 @@ def detection_target_layer(proposals, gt_class_ids, gt_boxes, gt_masks, gt_param
         ## Threshold mask pixels at 0.5 to have GT masks be 0 or 1 to use with
         ## binary cross entropy loss.
     else:
-        print("In second condition")
         positive_count = 0
 
     ## 2. Negative ROIs are those with < 0.5 with every GT box. Skip crowds.
     negative_roi_bool = roi_iou_max < 0.5
     
-     
-    print(negative_roi_bool.size())
-    print(no_crowd_bool.size())
-    
-    
+    print(no_crowd_bool.data)
+
     negative_roi_bool = negative_roi_bool & no_crowd_bool
     
-    print(negative_roi_bool.size())
-
     ## Negative ROIs. Add enough to maintain positive:negative ratio.
     if (negative_roi_bool > 0).sum() > 0 and positive_count>0:
         negative_indices = torch.nonzero(negative_roi_bool)[:, 0]
