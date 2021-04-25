@@ -22,6 +22,8 @@ from torchvision.ops import roi_align
 from utils.planer_cnn_utils import *
 from .modules import *
 import cv2
+from torchvision.ops import nms
+
 
 ############################################################
 #  Pytorch Utility Functions
@@ -224,7 +226,6 @@ def proposal_layer(inputs, proposal_count, nms_threshold, anchors, config=None):
     ## for small objects, so we're skipping it.
 
     ## Non-max suppression
-    from torchvision.ops import nms
     keep = nms(boxes, scores, nms_threshold)
     # keep = nms(torch.cat((boxes, scores.unsqueeze(1)), 1).data, nms_threshold)
 
@@ -526,18 +527,12 @@ def detection_target_layer(proposals, gt_class_ids, gt_boxes, gt_masks, gt_param
             box_ids = box_ids.cuda()
 
         if config.NUM_PARAMETER_CHANNELS > 0:
-            print("In first condition")           
             masks = Variable(roi_align(input = roi_masks[:, :, :, 1].contiguous().unsqueeze(1), boxes = [boxes], output_size = (config.MASK_SHAPE[0], config.MASK_SHAPE[1])).data, requires_grad=False).squeeze(1)
             masks = torch.round(masks)
             parameters = Variable(roi_align(input = roi_masks[:, :, :, 1].contiguous().unsqueeze(1), boxes = [boxes], output_size = (config.MASK_SHAPE[0], config.MASK_SHAPE[1])).data, requires_grad=False).squeeze(1)
             masks = torch.stack([masks, parameters], dim=-1)
         else:
-            print("Inside first second condition")
-            print(roi_masks.unsqueeze(1).size())
-            print(boxes.size())
-            print(config.MASK_SHAPE[0], config.MASK_SHAPE[1])
             masks = Variable(roi_align(input = roi_masks.unsqueeze(1), boxes = [boxes], output_size = (config.MASK_SHAPE[0], config.MASK_SHAPE[1])).data, requires_grad=False).squeeze(1)            
-            print(masks.size())
             masks = torch.round(masks)            
             pass
 
@@ -545,12 +540,11 @@ def detection_target_layer(proposals, gt_class_ids, gt_boxes, gt_masks, gt_param
         ## binary cross entropy loss.
     else:
         positive_count = 0
-
     ## 2. Negative ROIs are those with < 0.5 with every GT box. Skip crowds.
-    negative_roi_bool = roi_iou_max < 0.5
-    
-    print(no_crowd_bool.data)
 
+    
+
+    negative_roi_bool = (roi_iou_max < 0.5).to(torch.uint8)
     negative_roi_bool = negative_roi_bool & no_crowd_bool
     
     ## Negative ROIs. Add enough to maintain positive:negative ratio.
@@ -736,8 +730,7 @@ def refine_detections(rois, probs, deltas, parameters, window, config, return_in
         ix_scores = pre_nms_scores
         ix_scores, order = ix_scores.sort(descending=True)
         ix_rois = ix_rois[order.data,:]
-        
-        nms_keep = nms(torch.cat((ix_rois, ix_scores.unsqueeze(1)), dim=1).data, config.DETECTION_NMS_THRESHOLD)
+        nms_keep = nms(ix_rois, ix_scores, config.DETECTION_NMS_THRESHOLD)
         nms_keep = keep[ixs[order[nms_keep].data].data]
         keep = intersect1d(keep, nms_keep)        
     elif use_nms == 1:
@@ -755,8 +748,7 @@ def refine_detections(rois, probs, deltas, parameters, window, config, return_in
             ix_scores = pre_nms_scores[ixs]
             ix_scores, order = ix_scores.sort(descending=True)
             ix_rois = ix_rois[order.data,:]
-
-            class_keep = nms(torch.cat((ix_rois, ix_scores.unsqueeze(1)), dim=1).data, config.DETECTION_NMS_THRESHOLD)
+            class_keep = nms(ix_rois, ix_scores, config.DETECTION_NMS_THRESHOLD)
 
             ## Map indicies
             class_keep = keep[ixs[order[class_keep].data].data]

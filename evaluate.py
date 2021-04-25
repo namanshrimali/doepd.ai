@@ -249,6 +249,9 @@ def evaluate(options):
 
             with torch.no_grad():
                 detection_pair = detector.detect(sample)
+                print("********")
+                print(detection_pair)
+                print("********")
                 pass
 
             if options.dataset == 'rob':
