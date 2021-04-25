@@ -451,11 +451,6 @@ def detection_target_layer(proposals, gt_class_ids, gt_boxes, gt_masks, gt_param
                  network output size.
     """
     
-    # TODO check inputs, remove squeeze if size[0] is not 1
-    print("---------------")
-    print(gt_class_ids.size())
-    print("---------------")
-
     ## Currently only supports batchsize 1
     proposals = proposals.squeeze(0)
     gt_class_ids = gt_class_ids.squeeze(0)
@@ -526,24 +521,40 @@ def detection_target_layer(proposals, gt_class_ids, gt_boxes, gt_masks, gt_param
         if config.GPU_COUNT:
             box_ids = box_ids.cuda()
 
-        if config.NUM_PARAMETER_CHANNELS > 0:            
+        if config.NUM_PARAMETER_CHANNELS > 0:
+            print("In first condition")           
             masks = Variable(roi_align(input = roi_masks[:, :, :, 1].contiguous().unsqueeze(1), boxes = [boxes], output_size = (config.MASK_SHAPE[0], config.MASK_SHAPE[1])).data, requires_grad=False).squeeze(1)
             masks = torch.round(masks)
             parameters = Variable(roi_align(input = roi_masks[:, :, :, 1].contiguous().unsqueeze(1), boxes = [boxes], output_size = (config.MASK_SHAPE[0], config.MASK_SHAPE[1])).data, requires_grad=False).squeeze(1)
             masks = torch.stack([masks, parameters], dim=-1)
         else:
+            print("Inside first second condition")
+            print(roi_masks.unsqueeze(1).size())
+            print(boxes.size())
+            print(config.MASK_SHAPE[0], config.MASK_SHAPE[1])
             masks = Variable(roi_align(input = roi_masks.unsqueeze(1), boxes = [boxes], output_size = (config.MASK_SHAPE[0], config.MASK_SHAPE[1])).data, requires_grad=False).squeeze(1)            
+            print(masks.size())
             masks = torch.round(masks)            
             pass
 
         ## Threshold mask pixels at 0.5 to have GT masks be 0 or 1 to use with
         ## binary cross entropy loss.
     else:
+        print("In second condition")
         positive_count = 0
 
     ## 2. Negative ROIs are those with < 0.5 with every GT box. Skip crowds.
     negative_roi_bool = roi_iou_max < 0.5
+    
+     
+    print(negative_roi_bool.size())
+    print(no_crowd_bool.size())
+    
+    
     negative_roi_bool = negative_roi_bool & no_crowd_bool
+    
+    print(negative_roi_bool.size())
+
     ## Negative ROIs. Add enough to maintain positive:negative ratio.
     if (negative_roi_bool > 0).sum() > 0 and positive_count>0:
         negative_indices = torch.nonzero(negative_roi_bool)[:, 0]
