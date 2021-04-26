@@ -14,7 +14,7 @@ import cv2
 
 from models.planercnn.planercnn_decoder import detection_layer, unmold_detections
 from models.planercnn.modules import *
-from utils import *
+from utils.planer_cnn_utils import *
 
 
 def tileImages(image_list, padding_x=5, padding_y=5, background_color=0):
