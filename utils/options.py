@@ -31,7 +31,7 @@ def parse_args():
                         default='', type=str)
     parser.add_argument('--dataFolder', dest='dataFolder',
                         help='data folder',
-                        default='../../Data/ScanNet/', type=str)
+                        default='/content/doepd.ai/data/ScanNet', type=str)
     parser.add_argument('--anchorFolder', dest='anchorFolder',
                         help='anchor folder',
                         default='models/planercnn/anchors/', type=str)    
