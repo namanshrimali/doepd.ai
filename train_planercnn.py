@@ -14,7 +14,7 @@ import numpy as np
 import cv2
 import sys
 
-from models.doepd_net import *
+from models.doepd_net import DoepdNet, load_doepd_weights
 from models.planercnn.refinement_net import *
 from models.planercnn.modules import *
 from datasets.plane_stereo_dataset import *
@@ -53,13 +53,15 @@ def train(options):
     if options.restore == 1:
         ## Resume training
         print('restore')
-        model.load_state_dict(torch.load(options.checkpoint_dir + '/checkpoint.pth'))
+        load_doepd_weights(self.model, device="cuda")
+        # model.load_state_dict(torch.load(options.checkpoint_dir + '/checkpoint.pth'))
         refine_model.load_state_dict(torch.load(options.checkpoint_dir + '/checkpoint_refine.pth'))
     elif options.restore == 2:
         ## Train upon Mask R-CNN weights
         model_path = options.MaskRCNNPath
         print("Loading pretrained weights ", model_path)
-        model.load_weights(model_path)
+        load_doepd_weights(self.model, device="cuda")
+        # model.load_weights(model_path)
         pass
     
     if options.trainingMode != '':
@@ -369,9 +371,12 @@ def train(options):
             if (sampleIndex + 1) % options.numTrainingImages == 0:
                 ## Save models
                 print('loss', np.array(epoch_losses).mean(0))
-                torch.save(model.state_dict(), options.checkpoint_dir + '/checkpoint.pth')
-                torch.save(refine_model.state_dict(), options.checkpoint_dir + '/checkpoint_refine.pth')                
-                torch.save(optimizer.state_dict(), options.checkpoint_dir + '/optim.pth')
+                torch.save(model.state_dict(), options.checkpoint_dir + '/doepd_planer_checkpoint.pth')
+                torch.save(model.state_dict(), '/content/drive/MyDrive/doepd/weights/doepd_planer_checkpoint.pth')
+                torch.save(refine_model.state_dict(), options.checkpoint_dir + '/doepd_planer_checkpoint_refine.pth')
+                torch.save(refine_model.state_dict(), '/content/drive/MyDrive/doepd/weights/doepd_planer_checkpoint_refine.pth')                
+                torch.save(optimizer.state_dict(), options.checkpoint_dir + '/doepd_planer_optim.pth')
+                torch.save(optimizer.state_dict(), '/content/drive/MyDrive/doepd/weights/doepd_planer_optim.pth')
                 pass
             continue
         continue
