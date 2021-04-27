@@ -31,7 +31,7 @@ class PlaneDatasetSingle(Dataset):
         
         planenet_scene_ids_val = np.load('datasets/scene_ids_val.npy')
         planenet_scene_ids_val = {scene_id.decode('utf-8'): True for scene_id in planenet_scene_ids_val}
-        with open(self.dataFolder + '/ScanNet/Tasks/Benchmark/scannetv1_' + split + '.txt') as f:
+        with open(self.dataFolder + '/Tasks/Benchmark/scannetv1_' + split + '.txt') as f:
             for line in f:
                 scene_id = line.strip()
                 if split == 'test':

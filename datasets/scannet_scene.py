@@ -9,7 +9,7 @@ import glob
 import cv2
 import os
 
-from utils import *
+from utils.planer_cnn_utils import *
 
 class ScanNetScene():
     """ This class handle one scene of the scannet dataset and provide interface for dataloaders """
