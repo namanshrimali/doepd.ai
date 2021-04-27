@@ -53,34 +53,34 @@ def train(options):
     if options.restore == 1:
         ## Resume training
         print('restore')
-        load_doepd_weights(self.model, device="cuda")
+        load_doepd_weights(model, device="cuda")
         # model.load_state_dict(torch.load(options.checkpoint_dir + '/checkpoint.pth'))
         refine_model.load_state_dict(torch.load(options.checkpoint_dir + '/checkpoint_refine.pth'))
     elif options.restore == 2:
         ## Train upon Mask R-CNN weights
         model_path = options.MaskRCNNPath
         print("Loading pretrained weights ", model_path)
-        load_doepd_weights(self.model, device="cuda")
+        load_doepd_weights(model, device="cuda")
         # model.load_weights(model_path)
         pass
     
-    if options.trainingMode != '':
-        ## Specify which layers to train, default is "all"
-        layer_regex = {
-            ## all layers but the backbone
-            "heads": r"(fpn.P5\_.*)|(fpn.P4\_.*)|(fpn.P3\_.*)|(fpn.P2\_.*)|(rpn.*)|(classifier.*)|(mask.*)",
-            ## From a specific Resnet stage and up
-            "3+": r"(fpn.C3.*)|(fpn.C4.*)|(fpn.C5.*)|(fpn.P5\_.*)|(fpn.P4\_.*)|(fpn.P3\_.*)|(fpn.P2\_.*)|(rpn.*)|(classifier.*)|(mask.*)",
-            "4+": r"(fpn.C4.*)|(fpn.C5.*)|(fpn.P5\_.*)|(fpn.P4\_.*)|(fpn.P3\_.*)|(fpn.P2\_.*)|(rpn.*)|(classifier.*)|(mask.*)",
-            "5+": r"(fpn.C5.*)|(fpn.P5\_.*)|(fpn.P4\_.*)|(fpn.P3\_.*)|(fpn.P2\_.*)|(rpn.*)|(classifier.*)|(mask.*)",
-            ## All layers
-            "all": ".*",
-            "classifier": "(classifier.*)|(mask.*)|(depth.*)",
-        }
-        assert(options.trainingMode in layer_regex.keys())
-        layers = layer_regex[options.trainingMode]
-        model.set_trainable(layers)
-        pass
+    # if options.trainingMode != '':
+    #     ## Specify which layers to train, default is "all"
+    #     layer_regex = {
+    #         ## all layers but the backbone
+    #         "heads": r"(fpn.P5\_.*)|(fpn.P4\_.*)|(fpn.P3\_.*)|(fpn.P2\_.*)|(rpn.*)|(classifier.*)|(mask.*)",
+    #         ## From a specific Resnet stage and up
+    #         "3+": r"(fpn.C3.*)|(fpn.C4.*)|(fpn.C5.*)|(fpn.P5\_.*)|(fpn.P4\_.*)|(fpn.P3\_.*)|(fpn.P2\_.*)|(rpn.*)|(classifier.*)|(mask.*)",
+    #         "4+": r"(fpn.C4.*)|(fpn.C5.*)|(fpn.P5\_.*)|(fpn.P4\_.*)|(fpn.P3\_.*)|(fpn.P2\_.*)|(rpn.*)|(classifier.*)|(mask.*)",
+    #         "5+": r"(fpn.C5.*)|(fpn.P5\_.*)|(fpn.P4\_.*)|(fpn.P3\_.*)|(fpn.P2\_.*)|(rpn.*)|(classifier.*)|(mask.*)",
+    #         ## All layers
+    #         "all": ".*",
+    #         "classifier": "(classifier.*)|(mask.*)|(depth.*)",
+    #     }
+    #     assert(options.trainingMode in layer_regex.keys())
+    #     layers = layer_regex[options.trainingMode]
+    #     model.set_trainable(layers)
+    #     pass
 
     trainables_wo_bn = [param for name, param in model.named_parameters() if param.requires_grad and not 'bn' in name]
     trainables_only_bn = [param for name, param in model.named_parameters() if param.requires_grad and 'bn' in name]
@@ -103,8 +103,9 @@ def train(options):
         optimizer.load_state_dict(torch.load(options.checkpoint_dir + '/optim.pth'))        
         pass
 
-    
+    print(f'Starting training for epochs: {options.numEpochs}')
     for epoch in range(options.numEpochs):
+        print(f"Epoch: {epoch}")
         epoch_losses = []
         data_iterator = tqdm(dataloader, total=len(dataset) + 1)
 
@@ -399,8 +400,8 @@ if __name__ == '__main__':
         args.keyname += '_' + args.suffix
         pass
     
-    args.checkpoint_dir = 'checkpoint/' + args.keyname
-    args.test_dir = 'test/' + args.keyname
+    args.checkpoint_dir = 'weights'
+    args.test_dir = 'test/'
 
     if False:
         writeHTML(args.test_dir, ['image_0', 'segmentation_0', 'depth_0', 'depth_0_detection', 'depth_0_detection_ori'], labels=['input', 'segmentation', 'gt', 'before', 'after'], numImages=20, image_width=160, convertToImage=True)

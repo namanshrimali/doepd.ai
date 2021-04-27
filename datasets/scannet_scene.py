@@ -83,9 +83,9 @@ class ScanNetScene():
             
         self.camera[4] = self.depthWidth
         self.camera[5] = self.depthHeight
-        self.planes = np.load(scenePath + '/annotation/planes.npy')
+        self.planes = np.load(scenePath + '/annotation/planes.npy', allow_pickle=True)
 
-        self.plane_info = np.load(scenePath + '/annotation/plane_info.npy')            
+        self.plane_info = np.load(scenePath + '/annotation/plane_info.npy', allow_pickle=True)            
         if len(self.plane_info) != len(self.planes):
             print('invalid number of plane info', scenePath + '/annotation/planes.npy', scenePath + '/annotation/plane_info.npy', len(self.plane_info), len(self.planes))
             exit(1)
