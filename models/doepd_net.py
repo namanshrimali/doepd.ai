@@ -48,7 +48,7 @@ class DoepdNet(torch.nn.Module):
         for param in self.midas_net.parameters():
             param.requires_grad = False
     
-    def forward(self, x, plane_rcnn_image_meta = None, augment=False, mode='inference_detection', use_nms=2, use_refinement=True):
+    def forward(self, x, plane_rcnn_image_meta = None, augment=False, mode='inference_detection', use_nms=2, use_refinement=True, return_feature_map=False):
     
         encoder_layered_outputs = self.midas_net.forward_encoder(x)
         
@@ -62,7 +62,7 @@ class DoepdNet(torch.nn.Module):
         elif self.train_mode == 'midas':
             return self.midas_net.forward_decoder(encoder_layered_outputs)
         elif self.train_mode == 'planercnn':
-            return self.plane_rcnn_decoder.predict(x, plane_rcnn_image_meta, mode, encoder_layered_outputs = encoder_layered_outputs)
+            return self.plane_rcnn_decoder.predict(x, plane_rcnn_image_meta, mode, encoder_layered_outputs = encoder_layered_outputs, return_feature_map= return_feature_map)
             
     
 def load_doepd_weights(self, device='cpu', scratch=False, train_mode = False, load_mode='all'):

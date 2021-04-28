@@ -103,16 +103,16 @@ def train(options):
         optimizer.load_state_dict(torch.load(options.checkpoint_dir + '/optim.pth'))        
         pass
 
-    print(f'Starting training for epochs: {options.numEpochs}')
+    print(f'Starting training for {options.numEpochs} epochs')
     for epoch in range(options.numEpochs):
         print(f"Epoch: {epoch}")
         epoch_losses = []
-        print("Calculating data iterator")
+        # print("Calculating data iterator")
         data_iterator = tqdm(dataloader, total=len(dataset) + 1)
         optimizer.zero_grad()
-        print("Completed data_iterator calculation !")
+        # print("Completed data_iterator calculation !")
         for sampleIndex, sample in enumerate(data_iterator):
-            print("Iterating over data loader")
+            # print("Iterating over data loader")
             losses = []            
 
             input_pair = []
@@ -121,13 +121,13 @@ def train(options):
 
             camera = sample[30][0].cuda()                
             for indexOffset in [0, 13]:
-                print("Cultivating meta data")
+                # print("Cultivating meta data")
                 images, image_metas, rpn_match, rpn_bbox, gt_class_ids, gt_boxes, gt_masks, gt_parameters, gt_depth, extrinsics, gt_plane, gt_segmentation, plane_indices = sample[indexOffset + 0].cuda(), sample[indexOffset + 1].numpy(), sample[indexOffset + 2].cuda(), sample[indexOffset + 3].cuda(), sample[indexOffset + 4].cuda(), sample[indexOffset + 5].cuda(), sample[indexOffset + 6].cuda(), sample[indexOffset + 7].cuda(), sample[indexOffset + 8].cuda(), sample[indexOffset + 9].cuda(), sample[indexOffset + 10].cuda(), sample[indexOffset + 11].cuda(), sample[indexOffset + 12].cuda()
-                print("Meta data successfully loaded")
+                # print("Meta data successfully loaded")
                 if indexOffset == 13:
                     input_pair.append({'image': images, 'depth': gt_depth, 'mask': gt_masks, 'bbox': gt_boxes, 'extrinsics': extrinsics, 'segmentation': gt_segmentation, 'plane': gt_plane, 'camera': camera})
                     continue
-                print("Sending everything to the model !")
+                # print("Sending everything to the model !")
                 rpn_class_logits, rpn_pred_bbox, target_class_ids, mrcnn_class_logits, target_deltas, mrcnn_bbox, target_mask, mrcnn_mask, target_parameters, mrcnn_parameters, detections, detection_masks, detection_gt_parameters, detection_gt_masks, rpn_rois, roi_features, roi_indices, feature_map, depth_np_pred = model.forward(
                     images,
                     [image_metas, gt_class_ids, gt_boxes, gt_masks, gt_parameters, camera], 
@@ -135,9 +135,9 @@ def train(options):
                     use_nms=2, 
                     use_refinement='refinement' in options.suffix, 
                     return_feature_map=True)
-                print("Received output from the model")
+                # print("Received output from the model")
                 rpn_class_loss, rpn_bbox_loss, mrcnn_class_loss, mrcnn_bbox_loss, mrcnn_mask_loss, mrcnn_parameter_loss = compute_losses(config, rpn_match, rpn_bbox, rpn_class_logits, rpn_pred_bbox, target_class_ids, mrcnn_class_logits, target_deltas, mrcnn_bbox, target_mask, mrcnn_mask, target_parameters, mrcnn_parameters)
-                print("Loss computed")
+                # print("Loss computed")
                 losses += [rpn_class_loss + rpn_bbox_loss + mrcnn_class_loss + mrcnn_bbox_loss + mrcnn_mask_loss + mrcnn_parameter_loss]
 
                 if config.PREDICT_NORMAL_NP:
