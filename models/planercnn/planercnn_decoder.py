@@ -1238,11 +1238,6 @@ def compute_mrcnn_mask_loss(config, target_masks, target_class_ids, target_param
     return loss
 
 def compute_mrcnn_parameter_loss(target_parameters, target_class_ids, pred_parameters):
-    print("-----")
-    print(target_parameters.data)
-    print(target_class_ids.data)
-    print(pred_parameters.data)
-    print("-----")
     """Loss for Mask R-CNN bounding box refinement.
 
     target_bbox: [batch, num_rois, (dy, dx, log(dh), log(dw))]
