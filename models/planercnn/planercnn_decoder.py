@@ -544,7 +544,7 @@ def detection_target_layer(proposals, gt_class_ids, gt_boxes, gt_masks, gt_param
 
     
 
-    negative_roi_bool = (roi_iou_max < 0.5).to(torch.bool)
+    negative_roi_bool = (roi_iou_max < 0.5).to(torch.uint8)
     negative_roi_bool = negative_roi_bool & no_crowd_bool
     
     ## Negative ROIs. Add enough to maintain positive:negative ratio.

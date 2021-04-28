@@ -61,20 +61,20 @@ class PlaneDatasetSingle(Dataset):
 
         self.invalid_indices = {}
 
-        with open(self.dataFolder + '/invalid_indices_' + split + '.txt', 'r') as f:
-            for line in f:
-                tokens = line.split(' ')
-                if len(tokens) == 3:
-                    assert(int(tokens[2]) < 10000)
-                    invalid_index = int(tokens[1]) * 10000 + int(tokens[2])
-                    if invalid_index not in self.invalid_indices:
-                        self.invalid_indices[invalid_index] = True
-                        pass
-                    pass
-                continue
-            pass
+        # with open(self.dataFolder + '/invalid_indices_' + split + '.txt', 'r') as f:
+        #     for line in f:
+        #         tokens = line.split(' ')
+        #         if len(tokens) == 3:
+        #             assert(int(tokens[2]) < 10000)
+        #             invalid_index = int(tokens[1]) * 10000 + int(tokens[2])
+        #             if invalid_index not in self.invalid_indices:
+        #                 self.invalid_indices[invalid_index] = True
+        #                 pass
+        #             pass
+        #         continue
+        #     pass
 
-        self.sceneImageIndices = [[sceneIndex, imageIndex] for sceneIndex, imageIndex in self.sceneImageIndices if (sceneIndex * 10000 + imageIndex) not in self.invalid_indices]
+        # self.sceneImageIndices = [[sceneIndex, imageIndex] for sceneIndex, imageIndex in self.sceneImageIndices if (sceneIndex * 10000 + imageIndex) not in self.invalid_indices]
 
         print('num images', len(self.sceneImageIndices))
         
