@@ -1245,7 +1245,7 @@ def compute_mrcnn_parameter_loss(target_parameters, target_class_ids, pred_param
     pred_bbox: [batch, num_rois, num_classes, (dy, dx, log(dh), log(dw))]
     """
 
-    if (target_class_ids > 0).sum() > 0:
+    if ((not torch.numel(target_class_ids)) and target_class_ids > 0).sum() > 0:
         ## Only positive ROIs contribute to the loss. And only
         ## the right class_id of each ROI. Get their indicies.
         positive_roi_ix = torch.nonzero(target_class_ids > 0)[:, 0]

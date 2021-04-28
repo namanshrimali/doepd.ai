@@ -105,7 +105,6 @@ def train(options):
 
     print(f'Starting training for {options.numEpochs} epochs')
     for epoch in range(options.numEpochs):
-        print(f"Epoch: {epoch}")
         epoch_losses = []
         # print("Calculating data iterator")
         data_iterator = tqdm(dataloader, total=len(dataset) + 1)
@@ -356,6 +355,7 @@ def train(options):
 
             loss.backward()
             
+            
             if (sampleIndex + 1) % options.batchSize == 0:
                 optimizer.step()
                 optimizer.zero_grad()
@@ -372,18 +372,18 @@ def train(options):
                     pass
                 pass
 
-            if (sampleIndex + 1) % options.numTrainingImages == 0:
+            # if (sampleIndex + 1) % options.numTrainingImages == 0:
                 ## Save models
-                print('loss', np.array(epoch_losses).mean(0))
-                torch.save(model.state_dict(), options.checkpoint_dir + '/doepd_planer_checkpoint.pth')
-                torch.save(model.state_dict(), '/content/drive/MyDrive/doepd/weights/doepd_planer_checkpoint.pth')
-                torch.save(refine_model.state_dict(), options.checkpoint_dir + '/doepd_planer_checkpoint_refine.pth')
-                torch.save(refine_model.state_dict(), '/content/drive/MyDrive/doepd/weights/doepd_planer_checkpoint_refine.pth')                
-                torch.save(optimizer.state_dict(), options.checkpoint_dir + '/doepd_planer_optim.pth')
-                torch.save(optimizer.state_dict(), '/content/drive/MyDrive/doepd/weights/doepd_planer_optim.pth')
-                pass
-            continue
-        continue
+                # pass
+            # continue
+        print('loss', np.array(epoch_losses).mean(0))
+        torch.save(model.state_dict(), options.checkpoint_dir + '/doepd_planer_checkpoint.pth')
+        torch.save(model.state_dict(), '/content/drive/MyDrive/doepd/weights/doepd_planer_checkpoint.pth')
+        torch.save(refine_model.state_dict(), options.checkpoint_dir + '/doepd_planer_checkpoint_refine.pth')
+        torch.save(refine_model.state_dict(), '/content/drive/MyDrive/doepd/weights/doepd_planer_checkpoint_refine.pth')                
+        torch.save(optimizer.state_dict(), options.checkpoint_dir + '/doepd_planer_optim.pth')
+        torch.save(optimizer.state_dict(), '/content/drive/MyDrive/doepd/weights/doepd_planer_optim.pth')
+        # continue
     return
 
 
