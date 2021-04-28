@@ -544,7 +544,7 @@ def detection_target_layer(proposals, gt_class_ids, gt_boxes, gt_masks, gt_param
 
     
 
-    negative_roi_bool = (roi_iou_max < 0.5).to(torch.uint8)
+    negative_roi_bool = (roi_iou_max < 0.5).to(torch.bool)
     negative_roi_bool = negative_roi_bool & no_crowd_bool
     
     ## Negative ROIs. Add enough to maintain positive:negative ratio.
@@ -1238,6 +1238,11 @@ def compute_mrcnn_mask_loss(config, target_masks, target_class_ids, target_param
     return loss
 
 def compute_mrcnn_parameter_loss(target_parameters, target_class_ids, pred_parameters):
+    print("-----")
+    print(target_parameters.data)
+    print(target_class_ids.data)
+    print(pred_parameters.data)
+    print("-----")
     """Loss for Mask R-CNN bounding box refinement.
 
     target_bbox: [batch, num_rois, (dy, dx, log(dh), log(dw))]
