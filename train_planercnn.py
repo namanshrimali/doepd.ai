@@ -46,7 +46,7 @@ def train(options):
     model = DoepdNet(train_mode='planercnn')
     refine_model = RefineModel(options)
     model.cuda()
-    model.train()    
+    model.train()
     refine_model.cuda()
     refine_model.train()    
 
@@ -64,28 +64,28 @@ def train(options):
         # model.load_weights(model_path)
         pass
     
-    if options.trainingMode != '':
-        ## Specify which layers to train, default is "all"
-        layer_regex = {
-            ## all layers but the backbone
-            "heads": r"(fpn.P5\_.*)|(fpn.P4\_.*)|(fpn.P3\_.*)|(fpn.P2\_.*)|(rpn.*)|(classifier.*)|(mask.*)",
-            ## From a specific Resnet stage and up
-            "3+": r"(fpn.C3.*)|(fpn.C4.*)|(fpn.C5.*)|(fpn.P5\_.*)|(fpn.P4\_.*)|(fpn.P3\_.*)|(fpn.P2\_.*)|(rpn.*)|(classifier.*)|(mask.*)",
-            "4+": r"(fpn.C4.*)|(fpn.C5.*)|(fpn.P5\_.*)|(fpn.P4\_.*)|(fpn.P3\_.*)|(fpn.P2\_.*)|(rpn.*)|(classifier.*)|(mask.*)",
-            "5+": r"(fpn.C5.*)|(fpn.P5\_.*)|(fpn.P4\_.*)|(fpn.P3\_.*)|(fpn.P2\_.*)|(rpn.*)|(classifier.*)|(mask.*)",
-            ## All layers
-            "all": ".*",
-            "classifier": "(classifier.*)|(mask.*)|(depth.*)",
-        }
-        assert(options.trainingMode in layer_regex.keys())
-        layers = layer_regex[options.trainingMode]
-        model.plane_rcnn_decoder.set_trainable(layers)
-        pass
+    # if options.trainingMode != '':
+    #     ## Specify which layers to train, default is "all"
+    #     layer_regex = {
+    #         ## all layers but the backbone
+    #         "heads": r"(fpn.P5\_.*)|(fpn.P4\_.*)|(fpn.P3\_.*)|(fpn.P2\_.*)|(rpn.*)|(classifier.*)|(mask.*)",
+    #         ## From a specific Resnet stage and up
+    #         "3+": r"(fpn.C3.*)|(fpn.C4.*)|(fpn.C5.*)|(fpn.P5\_.*)|(fpn.P4\_.*)|(fpn.P3\_.*)|(fpn.P2\_.*)|(rpn.*)|(classifier.*)|(mask.*)",
+    #         "4+": r"(fpn.C4.*)|(fpn.C5.*)|(fpn.P5\_.*)|(fpn.P4\_.*)|(fpn.P3\_.*)|(fpn.P2\_.*)|(rpn.*)|(classifier.*)|(mask.*)",
+    #         "5+": r"(fpn.C5.*)|(fpn.P5\_.*)|(fpn.P4\_.*)|(fpn.P3\_.*)|(fpn.P2\_.*)|(rpn.*)|(classifier.*)|(mask.*)",
+    #         ## All layers
+    #         "all": ".*",
+    #         "classifier": "(classifier.*)|(mask.*)|(depth.*)",
+    #     }
+    #     assert(options.trainingMode in layer_regex.keys())
+    #     layers = layer_regex[options.trainingMode]
+    #     model.plane_rcnn_decoder.set_trainable(layers)
+    #     pass
 
-    trainables_wo_bn = [param for name, param in model.named_parameters() if param.requires_grad and not 'bn' in name]
-    trainables_only_bn = [param for name, param in model.named_parameters() if param.requires_grad and 'bn' in name]
+    trainables_wo_bn = [param for name, param in model.plane_rcnn_decoder.named_parameters() if param.requires_grad and not 'bn' in name]
+    trainables_only_bn = [param for name, param in model.plane_rcnn_decoder.named_parameters() if param.requires_grad and 'bn' in name]
 
-    model_names = [name for name, param in model.named_parameters()]
+    model_names = [name for name, param in model.plane_rcnn_decoder.named_parameters()]
     for name, param in refine_model.named_parameters():
         assert(name not in model_names)
         continue

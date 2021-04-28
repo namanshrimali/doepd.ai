@@ -34,7 +34,7 @@ def parse_args():
                         default='/content/doepd.ai/data/ScanNet', type=str)
     parser.add_argument('--anchorFolder', dest='anchorFolder',
                         help='anchor folder',
-                        default='models/planercnn/anchors/', type=str)    
+                        default='/content/doepd.ai/models/planercnn/anchors/', type=str)    
     parser.add_argument('--customDataFolder', dest='customDataFolder',
                         help='data folder',
                         default='test/custom', type=str)
@@ -43,10 +43,10 @@ def parse_args():
                         default='../mask_rcnn_coco.pth', type=str)    
     parser.add_argument('--numTrainingImages', dest='numTrainingImages',
                         help='the number of images to train',
-                        default=1000, type=int)
+                        default=2000, type=int)
     parser.add_argument('--numTestingImages', dest='numTestingImages',
                         help='the number of images to test/predict',
-                        default=100, type=int)
+                        default=200, type=int)
     parser.add_argument('--testingIndex', dest='testingIndex',
                         help='the index of images to test',
                         default=-1, type=int)
