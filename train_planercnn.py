@@ -301,7 +301,7 @@ def train(options):
                     pass
             else:
                 losses += [torch.zeros(1).cuda()]
-                print(f'losses: {losses}')
+                # print(f'losses: {losses}')
                 pass
 
             ## The warping loss
