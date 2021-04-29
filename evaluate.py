@@ -60,7 +60,9 @@ class PlaneRCNNDetector():
         #         pass
         #     pass
         
-        load_doepd_weights(self.model, device="cuda")
+        # load_doepd_weights(self.model, device="cuda")
+        chkpt = torch.load("/content/drive/MyDrive/doepd/weights/doepd_planer_checkpoint.pth")
+        self.model.load_state_dict(chkpt)
 
         if 'refine' in modelType or 'final' in modelType:
             self.refine_model = RefineModel(options)
@@ -68,7 +70,7 @@ class PlaneRCNNDetector():
             self.refine_model.cuda()
             self.refine_model.eval()
             if not separate:
-                state_dict = torch.load(checkpoint_dir + '/checkpoint_refine.pth')
+                state_dict = torch.load('/content/drive/MyDrive/doepd/weights/doepd_planer_checkpoint_refine.pth')
                 self.refine_model.load_state_dict(state_dict)
                 pass
             else:

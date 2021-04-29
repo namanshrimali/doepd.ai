@@ -1238,6 +1238,11 @@ def compute_mrcnn_mask_loss(config, target_masks, target_class_ids, target_param
     return loss
 
 def compute_mrcnn_parameter_loss(target_parameters, target_class_ids, pred_parameters):
+    # print("-----")
+    # print(target_parameters.data)
+    # print(target_class_ids.data)
+    # print(pred_parameters.data)
+    # print("-----")
     """Loss for Mask R-CNN bounding box refinement.
 
     target_bbox: [batch, num_rois, (dy, dx, log(dh), log(dw))]
@@ -1245,7 +1250,8 @@ def compute_mrcnn_parameter_loss(target_parameters, target_class_ids, pred_param
     pred_bbox: [batch, num_rois, num_classes, (dy, dx, log(dh), log(dw))]
     """
 
-    if ((not torch.numel(target_class_ids)) and target_class_ids > 0).sum() > 0:
+
+    if ((not torch.numel(target_class_ids)) and (target_class_ids > 0).sum() > 0):
         ## Only positive ROIs contribute to the loss. And only
         ## the right class_id of each ROI. Get their indicies.
         positive_roi_ix = torch.nonzero(target_class_ids > 0)[:, 0]
@@ -1264,7 +1270,6 @@ def compute_mrcnn_parameter_loss(target_parameters, target_class_ids, pred_param
     return loss
 
 def compute_losses(config, rpn_match, rpn_bbox, rpn_class_logits, rpn_pred_bbox, target_class_ids, mrcnn_class_logits, target_deltas, mrcnn_bbox, target_mask, mrcnn_mask, target_parameters, mrcnn_parameters):
-
     rpn_class_loss = compute_rpn_class_loss(rpn_match, rpn_class_logits)
     rpn_bbox_loss = compute_rpn_bbox_loss(rpn_bbox, rpn_match, rpn_pred_bbox)
     mrcnn_class_loss = compute_mrcnn_class_loss(target_class_ids, mrcnn_class_logits)
