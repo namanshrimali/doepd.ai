@@ -278,7 +278,7 @@ def train(options):
                         masks_pred = (masks_pred.max(0, keepdim=True)[1] == torch.arange(len(masks_pred)).cuda().long().view((-1, 1, 1))).float()[1:]
                         pass                    
                     continue
-                print(f'mask_loss: {mask_loss} depth_loss: {depth_loss} plane_depth_loss: {plane_depth_loss} plane_loss: {plane_loss}')
+                # print(f'mask_loss: {mask_loss} depth_loss: {depth_loss} plane_depth_loss: {plane_depth_loss} plane_loss: {plane_loss}')
                 losses += [mask_loss + depth_loss + plane_depth_loss + plane_loss]
                 
                 masks = results[-1]['mask'].squeeze(1)
@@ -326,18 +326,18 @@ def train(options):
                     pass
 
                 warped_depth_loss = l1LossMask(warped_depth, input_pair[c]['depth'], valid_mask)
-                print(f'warped_depth_loss : {warped_depth_loss}')
+                # print(f'warped_depth_loss : {warped_depth_loss}')
                 losses += [warped_depth_loss]
                 
                 if 'warping1' in options.suffix or 'warping3' in options.suffix:
                     warped_mask_loss = l1LossMask(warped_mask, (input_pair[c]['segmentation'] >= 0).float(), valid_mask)
-                    print(f'warped_mask_loss: {warped_mask_loss}')
+                    # print(f'warped_mask_loss: {warped_mask_loss}')
                     losses += [warped_mask_loss]
                     pass
 
                 if 'warping2' in options.suffix or 'warping3' in options.suffix:
                     warped_image_loss = l1NormLossMask(warped_images, input_pair[c]['image'], dim=1, valid_mask=valid_mask)
-                    print(f'warped_image_loss: {warped_image_loss}')
+                    # print(f'warped_image_loss: {warped_image_loss}')
                     losses += [warped_image_loss]
                     pass
                 
@@ -381,6 +381,7 @@ def train(options):
                 ## Save models
                 # pass
             # continue
+            
         print('loss', np.array(epoch_losses).mean(0))
         torch.save(model.state_dict(), options.checkpoint_dir + '/doepd_planer_checkpoint.pth')
         torch.save(model.state_dict(), '/content/drive/MyDrive/doepd/weights/doepd_planer_checkpoint.pth')
