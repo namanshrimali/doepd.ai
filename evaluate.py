@@ -75,14 +75,13 @@ class PlaneRCNNDetector():
                 pass
             else:
                 # self.model.load_state_dict(torch.load('checkpoint/pair_' + options.anchorType + '_pair/checkpoint.pth'))
-                self.refine_model.load_state_dict(torch.load('checkpoint/instance_normal_refine_mask_softmax_valid/checkpoint_refine.pth'))
+                self.refine_model.load_state_dict(torch.load('/content/drive/MyDrive/doepd/weights/doepd_planer_checkpoint_refine.pth'))
                 pass
             pass
 
         return
 
     def detect(self, sample):
-
         input_pair = []
         detection_pair = []
         camera = sample[30][0].cuda()
@@ -251,7 +250,6 @@ def evaluate(options):
 
             with torch.no_grad():
                 detection_pair = detector.detect(sample)
-                
                 pass
 
             if options.dataset == 'rob':
@@ -269,6 +267,10 @@ def evaluate(options):
                     continue
             else:
                 for c in range(len(detection_pair)):
+                    print("=====")
+                    print(detection_pair[c])
+                    print("=====")
+
                     np.save(options.test_dir + '/' + str(sampleIndex % 500) + '_plane_parameters_' + str(c) + '.npy', detection_pair[c]['detection'][:, 6:9].cpu())
                     np.save(options.test_dir + '/' + str(sampleIndex % 500) + '_plane_masks_' + str(c) + '.npy', detection_pair[c]['masks'][:, 80:560].cpu())
                     continue
