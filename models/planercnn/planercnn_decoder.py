@@ -226,7 +226,7 @@ def proposal_layer(inputs, proposal_count, nms_threshold, anchors, config=None):
     ## for small objects, so we're skipping it.
 
     ## Non-max suppression
-    keep = nms(boxes, scores, nms_threshold)
+    keep = nms(boxes, scores.unsqueeze(1), nms_threshold)
     # keep = nms(torch.cat((boxes, scores.unsqueeze(1)), 1).data, nms_threshold)
 
     keep = keep[:proposal_count]
@@ -730,9 +730,9 @@ def refine_detections(rois, probs, deltas, parameters, window, config, return_in
         ix_scores = pre_nms_scores
         ix_scores, order = ix_scores.sort(descending=True)
         ix_rois = ix_rois[order.data,:]
-        nms_keep = nms(ix_rois, ix_scores, config.DETECTION_NMS_THRESHOLD)
+        nms_keep = nms(ix_rois, ix_scores.unsqueeze(1), config.DETECTION_NMS_THRESHOLD)
         nms_keep = keep[ixs[order[nms_keep].data].data]
-        keep = intersect1d(keep, nms_keep)        
+        keep = intersect1d(keep, nms_keep)
     elif use_nms == 1:
         ## Apply per-class NMS
         pre_nms_class_ids = class_ids[keep.data]
@@ -748,7 +748,7 @@ def refine_detections(rois, probs, deltas, parameters, window, config, return_in
             ix_scores = pre_nms_scores[ixs]
             ix_scores, order = ix_scores.sort(descending=True)
             ix_rois = ix_rois[order.data,:]
-            class_keep = nms(ix_rois, ix_scores, config.DETECTION_NMS_THRESHOLD)
+            class_keep = nms(ix_rois, ix_scores.unsqueeze(1), config.DETECTION_NMS_THRESHOLD)
 
             ## Map indicies
             class_keep = keep[ixs[order[class_keep].data].data]
