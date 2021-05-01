@@ -339,7 +339,7 @@ def pyramid_roi_align(inputs, pool_size, image_shape):
     ## Rearrange pooled features to match the order of the original boxes
     _, box_to_level = torch.sort(box_to_level)
     pooled = pooled[box_to_level, :, :]
-    print(f"pooled: {pooled}")
+    # print(f"pooled: {pooled}")
 
     return pooled
 
@@ -361,7 +361,7 @@ def coordinates_roi(inputs, pool_size, image_shape):
     The width and height are those specific in the pool_shape in the layer
     constructor.
     """
-    print("Inside coordinates_roi")
+    # print("Inside coordinates_roi")
 
     ## Currently only supports batchsize 1
     for i in range(len(inputs)):
@@ -389,7 +389,7 @@ def coordinates_roi(inputs, pool_size, image_shape):
         ind = ind.cuda()
     cooridnates = cooridnates.unsqueeze(0)
     pooled_features = roi_align(input = cooridnates, boxes = [boxes], output_size = (pool_size, pool_size))
-    print(f"pooled_features: {pooled_features}")
+    # print(f"pooled_features: {pooled_features}")
     return pooled_features
 
 
@@ -404,7 +404,7 @@ def bbox_overlaps(boxes1, boxes2):
     ## every boxes1 against every boxes2 without loops.
     ## TF doesn't have an equivalent to np.repeate() so simulate it
     ## using tf.tile() and tf.reshape.
-    print("Inside bbox_overlaps")
+    # print("Inside bbox_overlaps")
     boxes1_repeat = boxes2.size()[0]
     boxes2_repeat = boxes1.size()[0]
     boxes1 = boxes1.repeat(1,boxes1_repeat).view(-1,4)
@@ -430,7 +430,7 @@ def bbox_overlaps(boxes1, boxes2):
     ## 4. Compute IoU and reshape to [boxes1, boxes2]
     iou = intersection / union
     overlaps = iou.view(boxes2_repeat, boxes1_repeat)
-    print(f"overlaps: {overlaps}")
+    # print(f"overlaps: {overlaps}")
     return overlaps
 
 def detection_target_layer(proposals, gt_class_ids, gt_boxes, gt_masks, gt_parameters, config):
@@ -457,7 +457,7 @@ def detection_target_layer(proposals, gt_class_ids, gt_boxes, gt_masks, gt_param
                  Masks cropped to bbox boundaries and resized to neural
                  network output size.
     """
-    print("Inside detection_target_layer")
+    # print("Inside detection_target_layer")
     
     ## Currently only supports batchsize 1
     proposals = proposals.squeeze(0)
@@ -629,7 +629,7 @@ def detection_target_layer(proposals, gt_class_ids, gt_boxes, gt_masks, gt_param
             masks = masks.cuda()
             roi_gt_parameters = roi_gt_parameters.cuda()
             pass
-    print(f"rois: {rois}, roi_gt_class_ids: {roi_gt_class_ids}, deltas: {deltas}, masks:{masks}, roi_gt_parameters: {roi_gt_parameters}")
+    # print(f"rois: {rois}, roi_gt_class_ids: {roi_gt_class_ids}, deltas: {deltas}, masks:{masks}, roi_gt_parameters: {roi_gt_parameters}")
     return rois, roi_gt_class_ids, deltas, masks, roi_gt_parameters
 
 
@@ -642,9 +642,9 @@ def clip_to_window(window, boxes):
         window: (y1, x1, y2, x2). The window in the image we want to clip to.
         boxes: [N, (y1, x1, y2, x2)]
     """
-    print("Inside clip_to_window")
+    # print("Inside clip_to_window")
     boxes = torch.stack([boxes[:, 0].clamp(float(window[0]), float(window[2])), boxes[:, 1].clamp(float(window[1]), float(window[3])), boxes[:, 2].clamp(float(window[0]), float(window[2])), boxes[:, 3].clamp(float(window[1]), float(window[3]))], dim=-1)
-    print(f"boxed: {boxes}")
+    # print(f"boxed: {boxes}")
     return boxes
 
 def refine_detections(rois, probs, deltas, parameters, window, config, return_indices=False, use_nms=1, one_hot=True):
@@ -1092,7 +1092,7 @@ def compute_rpn_class_loss(rpn_match, rpn_class_logits):
                -1=negative, 0=neutral anchor.
     rpn_class_logits: [batch, anchors, 2]. RPN classifier logits for FG/BG.
     """
-    print("Inside compute_rpn_class_loss")
+    # print("Inside compute_rpn_class_loss")
 
     ## Squeeze last dim to simplify
     rpn_match = rpn_match.squeeze(2)
@@ -1110,7 +1110,7 @@ def compute_rpn_class_loss(rpn_match, rpn_class_logits):
 
     ## Crossentropy loss
     loss = F.cross_entropy(rpn_class_logits, anchor_class)
-    print(f"loss: {loss}")
+    # print(f"loss: {loss}")
     return loss
 
 def compute_rpn_bbox_loss(target_bbox, rpn_match, rpn_bbox):
@@ -1122,7 +1122,7 @@ def compute_rpn_bbox_loss(target_bbox, rpn_match, rpn_bbox):
                -1=negative, 0=neutral anchor.
     rpn_bbox: [batch, anchors, (dy, dx, log(dh), log(dw))]
     """
-    print("Inside compute_rpn_bbox_loss")
+    # print("Inside compute_rpn_bbox_loss")
 
     ## Squeeze last dim to simplify
     rpn_match = rpn_match.squeeze(2)
@@ -1138,7 +1138,7 @@ def compute_rpn_bbox_loss(target_bbox, rpn_match, rpn_bbox):
 
     ## Smooth L1 loss
     loss = F.smooth_l1_loss(rpn_bbox, target_bbox)
-    print(f"Loss: {loss}")
+    # print(f"Loss: {loss}")
 
     return loss
 
@@ -1150,7 +1150,7 @@ def compute_mrcnn_class_loss(target_class_ids, pred_class_logits):
         padding to fill in the array.
     pred_class_logits: [batch, num_rois, num_classes]
     """
-    print("Inside compute_mrcnn_class_loss")
+    #print("Inside compute_mrcnn_class_loss")
 
     ## Loss
     if len(target_class_ids) > 0:
@@ -1159,7 +1159,7 @@ def compute_mrcnn_class_loss(target_class_ids, pred_class_logits):
         loss = Variable(torch.FloatTensor([0]), requires_grad=False)
         if target_class_ids.is_cuda:
             loss = loss.cuda()
-    print(f"loss: {loss}")
+    #print(f"loss: {loss}")
 
     return loss
 
@@ -1171,7 +1171,7 @@ def compute_mrcnn_bbox_loss(target_bbox, target_class_ids, pred_bbox):
     target_class_ids: [batch, num_rois]. Integer class IDs.
     pred_bbox: [batch, num_rois, num_classes, (dy, dx, log(dh), log(dw))]
     """
-    print("Inside compute_mrcnn_bbox_loss")
+    #print("Inside compute_mrcnn_bbox_loss")
 
     if (target_class_ids > 0).sum() > 0:
         ## Only positive ROIs contribute to the loss. And only
@@ -1190,7 +1190,7 @@ def compute_mrcnn_bbox_loss(target_bbox, target_class_ids, pred_bbox):
         loss = Variable(torch.FloatTensor([0]), requires_grad=False)
         if target_class_ids.is_cuda:
             loss = loss.cuda()
-    print(f"Loss: {loss}")
+    #print(f"Loss: {loss}")
 
     return loss
 
@@ -1204,7 +1204,7 @@ def compute_mrcnn_mask_loss(config, target_masks, target_class_ids, target_param
     pred_masks: [batch, proposals, height, width, num_classes] float32 tensor
                 with values from 0 to 1.
     """
-    print("Inside compute_mrcnn_mask_loss")
+    #print("Inside compute_mrcnn_mask_loss")
     if (target_class_ids > 0).sum() > 0:
         ## Only positive ROIs contribute to the loss. And only
         ## the class specific mask of each ROI.
@@ -1250,12 +1250,12 @@ def compute_mrcnn_mask_loss(config, target_masks, target_class_ids, target_param
         if target_class_ids.is_cuda:
             loss = loss.cuda()
             
-    print(f"Loss: {loss}")
+    #print(f"Loss: {loss}")
 
     return loss
 
 def compute_mrcnn_parameter_loss(target_parameters, target_class_ids, pred_parameters):
-    print("Inside compute_mrcnn_parameter_loss")
+    #print("Inside compute_mrcnn_parameter_loss")
     # print("-----")
     # print(target_parameters.data)
     # print(target_class_ids.data)
@@ -1285,11 +1285,22 @@ def compute_mrcnn_parameter_loss(target_parameters, target_class_ids, pred_param
         loss = Variable(torch.FloatTensor([0]), requires_grad=False)
         if target_class_ids.is_cuda:
             loss = loss.cuda()
-    print(f"Loss: {loss}")
+    #print(f"Loss: {loss}")
     return loss
 
 def compute_losses(config, rpn_match, rpn_bbox, rpn_class_logits, rpn_pred_bbox, target_class_ids, mrcnn_class_logits, target_deltas, mrcnn_bbox, target_mask, mrcnn_mask, target_parameters, mrcnn_parameters):
-    print("Inside compite_losses")
+    print("Inside compute_losses")
+    print(f"rpn_match,: {rpn_match}")
+    print(f"rpn_class_logits,: {rpn_class_logits}")
+    print(f"rpn_pred_bbox,: {rpn_pred_bbox}")
+    print(f"target_class_ids,: {target_class_ids}")
+    print(f"mrcnn_class_logits,: {mrcnn_class_logits}")
+    print(f"target_deltas,: {target_deltas}")
+    print(f"mrcnn_bbox,: {mrcnn_bbox}")
+    print(f"target_mask,: {target_mask}")
+    print(f"target_parameters,: {target_parameters}")
+    print(f"mrcnn_parameters,: {mrcnn_parameters}")
+    
     rpn_class_loss = compute_rpn_class_loss(rpn_match, rpn_class_logits)
     rpn_bbox_loss = compute_rpn_bbox_loss(rpn_bbox, rpn_match, rpn_pred_bbox)
     mrcnn_class_loss = compute_mrcnn_class_loss(target_class_ids, mrcnn_class_logits)
@@ -1678,7 +1689,6 @@ class MaskRCNN(nn.Module):
             ## padded. Equally, returned rois and targets are zero padded.
             rois, target_class_ids, target_deltas, target_mask, target_parameters = \
                 detection_target_layer(rpn_rois, gt_class_ids, gt_boxes, gt_masks, gt_parameters, self.config)
-
             if len(rois) == 0:
                 mrcnn_class_logits = Variable(torch.FloatTensor())
                 mrcnn_class = Variable(torch.IntTensor())
