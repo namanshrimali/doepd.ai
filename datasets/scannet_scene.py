@@ -77,7 +77,7 @@ class ScanNetScene():
                         pass
                     continue
                 pass
-            self.depthShift = 4000.0
+            self.depthShift = 1000.0
             self.imagePaths = [scenePath + '/frames/color/' + str(imageIndex) + '.jpg' for imageIndex in range(self.numImages - 1)]
             pass
             
@@ -132,6 +132,7 @@ class ScanNetScene():
             pass
 
         try:
+            self.depthShift = 40000.00
             depth = cv2.imread(depthPath, -1).astype(np.float32) / self.depthShift
         except:
             print('no depth image', depthPath, self.scenePath)

@@ -325,6 +325,8 @@ def pyramid_roi_align(inputs, pool_size, image_shape):
         ind = Variable(torch.zeros(level_boxes.size()[0]),requires_grad=False).int()
         if level_boxes.is_cuda:
             ind = ind.cuda()
+            
+        # TODO try removing unsqueeze from here
         feature_maps[i] = feature_maps[i].unsqueeze(0)
         
         pooled_features = roi_align(input = feature_maps[i], boxes = [level_boxes], output_size = (pool_size, pool_size))
@@ -905,7 +907,10 @@ class Classifier(nn.Module):
             pass
 
     def forward(self, x, rois, ranges, pool_features=True, gt=None):
-        x = pyramid_roi_align([rois] + x, self.pool_size, self.image_shape)
+        x = roi_align(input = x, boxes = [rois], output_size = (self.pool_size, self.pool_size))
+        
+        # x = pyramid_roi_align([rois] + x, self.pool_size, self.image_shape)
+        
         ranges = coordinates_roi([rois] + [ranges, ], self.pool_size, self.image_shape)
         roi_features = torch.cat([x, ranges], dim=1)
         x = self.conv1(roi_features)
@@ -961,7 +966,8 @@ class Mask(nn.Module):
 
     def forward(self, x, rois, pool_features=True):
         if pool_features:
-            roi_features = pyramid_roi_align([rois] + x, self.pool_size, self.image_shape)
+            roi_features = roi_align(input = x, boxes = [rois], output_size = (self.pool_size, self.pool_size))
+            # roi_features = pyramid_roi_align([rois] + x, self.pool_size, self.image_shape)
         else:
             roi_features = x
             pass
@@ -1268,8 +1274,7 @@ def compute_mrcnn_parameter_loss(target_parameters, target_class_ids, pred_param
     pred_bbox: [batch, num_rois, num_classes, (dy, dx, log(dh), log(dw))]
     """
 
-
-    if ((target_class_ids > 0).sum() > 0):
+    if (target_class_ids > 0).sum() > 0:
         ## Only positive ROIs contribute to the loss. And only
         ## the right class_id of each ROI. Get their indicies.
         positive_roi_ix = torch.nonzero(target_class_ids > 0)[:, 0]
