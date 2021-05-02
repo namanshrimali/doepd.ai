@@ -18,7 +18,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data
 from torch.autograd import Variable
-from RoIAlign.pytorch.roi_align.crop_and_resize import CropAndResizeFunction
+from .roi_align.roi_align.crop_and_resize import CropAndResizeFunction
 from utils.planer_cnn_utils import *
 from .modules import *
 import cv2
