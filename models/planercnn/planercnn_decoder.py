@@ -556,7 +556,7 @@ def detection_target_layer(proposals, gt_class_ids, gt_boxes, gt_masks, gt_param
     ## 2. Negative ROIs are those with < 0.5 with every GT box. Skip crowds.
 
     negative_roi_bool = (roi_iou_max < 0.5)
-    negative_roi_bool = int(negative_roi_bool == 'true')
+    negative_roi_bool = negative_roi_bool.long()
     negative_roi_bool = negative_roi_bool & no_crowd_bool
     
     ## Negative ROIs. Add enough to maintain positive:negative ratio.
