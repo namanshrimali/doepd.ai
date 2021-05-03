@@ -268,7 +268,7 @@ def pyramid_roi_align(inputs, pool_size, image_shape):
     constructor.
     """
     
-    print("Inside pyramid_roi_align")
+    # print("Inside pyramid_roi_align")
 
     ## Currently only supports batchsize 1
     for i in range(len(inputs)):
@@ -328,7 +328,7 @@ def pyramid_roi_align(inputs, pool_size, image_shape):
             
         # TODO try removing unsqueeze from here
         feature_maps[i] = feature_maps[i].unsqueeze(0)
-        crop_resize_fn = CropAndResizeFunction.apply(cooridnates, boxes, ind, pool_size, pool_size, 0)
+        crop_resize_fn = CropAndResizeFunction.apply(feature_maps[i], boxes, ind, pool_size, pool_size, 0)
         pooled_features = crop_resize_fn
         pooled.append(pooled_features)
 
@@ -390,7 +390,7 @@ def coordinates_roi(inputs, pool_size, image_shape):
     if boxes.is_cuda:
         ind = ind.cuda()
     cooridnates = cooridnates.unsqueeze(0)
-    crop_resize_fn = CropAndResizeFunction.apply(feature_maps[i], level_boxes, ind, pool_size, pool_size, 0)
+    crop_resize_fn = CropAndResizeFunction.apply(cooridnates, boxes, ind, pool_size, pool_size, 0)
     pooled_features = crop_resize_fn
     # print(f"pooled_features: {pooled_features}")
     return pooled_features
@@ -555,7 +555,7 @@ def detection_target_layer(proposals, gt_class_ids, gt_boxes, gt_masks, gt_param
         positive_count = 0
     ## 2. Negative ROIs are those with < 0.5 with every GT box. Skip crowds.
 
-    negative_roi_bool = (roi_iou_max < 0.5).to(torch.uint8)
+    negative_roi_bool = (roi_iou_max < 0.5)
     negative_roi_bool = negative_roi_bool & no_crowd_bool
     
     ## Negative ROIs. Add enough to maintain positive:negative ratio.
