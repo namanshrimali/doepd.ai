@@ -86,6 +86,8 @@ def parse_args():
     parser.add_argument('--numInputChannels', dest='numInputChannels',
                         help='the number of classes',
                         default=4, type=int)
+    parser.add_argument('--resume', action='store_true', help='resume training from last checkpoint')
+    parser.add_argument('--device', default='', help='device id (i.e. 0 or 0,1 or cpu)')
     ## Flags
     parser.add_argument('--visualizeMode', dest='visualizeMode',
                         help='visualization mode',
