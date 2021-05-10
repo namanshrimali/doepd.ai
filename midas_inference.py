@@ -3,7 +3,7 @@
 import os
 import glob
 import torch
-import utils
+import utils.midas_utils as utils
 import cv2
 import argparse
 
@@ -46,15 +46,15 @@ def run(input_path, output_path, model_path, optimize=True):
 
     model.eval()
     
-    if optimize==True:
-        rand_example = torch.rand(1, 3, net_h, net_w)
-        model(rand_example)
-        traced_script_module = torch.jit.trace(model, rand_example)
-        model = traced_script_module
+    # if optimize==True:
+    #     rand_example = torch.rand(1, 3, net_h, net_w)
+    #     model(rand_example)
+    #     traced_script_module = torch.jit.trace(model, rand_example)
+    #     model = traced_script_module
     
-        if device == torch.device("cuda"):
-            model = model.to(memory_format=torch.channels_last)  
-            model = model.half()
+    #     if device == torch.device("cuda"):
+    #         model = model.to(memory_format=torch.channels_last)  
+    #         model = model.half()
 
     model.to(device)
 
@@ -81,8 +81,8 @@ def run(input_path, output_path, model_path, optimize=True):
             sample = torch.from_numpy(img_input).to(device).unsqueeze(0)
             if optimize==True and device == torch.device("cuda"):
                 sample = sample.to(memory_format=torch.channels_last)  
-                sample = sample.half()
-            prediction = model.forward(sample)
+                # sample = sample.half()
+            prediction = model.forward(sample)[1]
             prediction = (
                 torch.nn.functional.interpolate(
                     prediction.unsqueeze(1),
@@ -117,18 +117,11 @@ if __name__ == "__main__":
         help='folder for output images'
     )
 
-    parser.add_argument('-m', '--model_weights', 
-        default='model-f6b98070.pt',
-        help='path to the trained weights of model'
-    )
-
     parser.add_argument('-t', '--model_type', 
         default='large',
         help='model type: large or small'
     )
 
-    parser.add_argument('--optimize', dest='optimize', action='store_true')
-    parser.add_argument('--no-optimize', dest='optimize', action='store_false')
     parser.set_defaults(optimize=True)
 
     args = parser.parse_args()

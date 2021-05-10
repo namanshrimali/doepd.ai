@@ -20,6 +20,7 @@ def parse_args():
     parser.add_argument('--restore', dest='restore',
                         help='how to restore the model',
                         default=1, type=int)
+    
     parser.add_argument('--batchSize', dest='batchSize',
                         help='batch size',
                         default=16, type=int)

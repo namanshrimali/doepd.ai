@@ -63,7 +63,7 @@ class DoepdNet(torch.nn.Module):
             doepd_forward_output[1] = self.midas_net.forward_decoder(encoder_layered_outputs)
         elif self.train_mode == 'planercnn' or self.train_mode == 'all':
             doepd_forward_output[2] = self.plane_rcnn_decoder.predict(x, plane_rcnn_image_meta, mode, encoder_layered_outputs = encoder_layered_outputs, return_feature_map= return_feature_map)
-                
+        return doepd_forward_output
 def load_doepd_weights(self, device='cpu', scratch=False, train_mode = False, load_mode='all'):
     yolo_weights = []
     chkpt = [None, None]
