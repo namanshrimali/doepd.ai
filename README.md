@@ -7,7 +7,7 @@ As the name suggests, this project involves
 * Monocular depth estimation
 * Plane Segmentation. 
 
-Introducing, *DoepdNet* (e before p is actually e after p, and d is silent, making it DopeNet.)
+Introducing, *DopeNet* (e before p is actually e after p, and d is silent, making DoepdNet DopeNet .)
 ## 2. Model Architecture
 ## 3. Training
 The following diagram shows the main components of training
