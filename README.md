@@ -12,3 +12,5 @@ Introducing, *DoepdNet* (e before p is actually e after p, and d is silent, maki
 The following diagram shows the main components of training
 ## 4. Inferencing
 ## 5. Results
+![Model output](/assets/ModelOutput.jpg)
+
