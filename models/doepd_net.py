@@ -67,7 +67,7 @@ class DoepdNet(torch.nn.Module):
 def load_doepd_weights(self, device='cpu', scratch=False, train_mode = False, load_mode='all'):
     yolo_weights = []
     chkpt = [None, None]
-        
+    from .yolo.yolo_decoder import load_yolo_decoder_weights
     if not scratch:
         # loading yolo weights
             
@@ -82,7 +82,7 @@ def load_doepd_weights(self, device='cpu', scratch=False, train_mode = False, lo
             chkpt[0] = torch.load(yolo_weight_file, map_location = "cpu")    
             num_items = 0
             
-            for k, v in chkpt['model'].items():
+            for k, v in chkpt[0]['model'].items():
                 if num_items>=666 and num_items<756:
                     if not k.endswith('num_batches_tracked'):
                         yolo_weights.append(v.detach().numpy())
@@ -90,14 +90,14 @@ def load_doepd_weights(self, device='cpu', scratch=False, train_mode = False, lo
             
             load_yolo_decoder_weights(self.yolo_decoder, yolo_weights)
                     
-            self.midas_layer_2_to_yolo_small_obj.weight = torch.nn.Parameter(chkpt['model']['midas_layer_2_to_yolo_small_obj.weight'])
-            self.midas_layer_2_to_yolo_small_obj.bias = torch.nn.Parameter(chkpt['model']['midas_layer_2_to_yolo_small_obj.bias'])
-            self.midas_layer_3_to_yolo_med_obj.weight = torch.nn.Parameter(chkpt['model']['midas_layer_3_to_yolo_med_obj.weight'])
-            self.midas_layer_3_to_yolo_med_obj.bias = torch.nn.Parameter(chkpt['model']['midas_layer_3_to_yolo_med_obj.bias'])
-            self.midas_layer_4_to_yolo_med_obj.weight = torch.nn.Parameter(chkpt['model']['midas_layer_4_to_yolo_med_obj.weight'])
-            self.midas_layer_4_to_yolo_med_obj.bias = torch.nn.Parameter(chkpt['model']['midas_layer_4_to_yolo_med_obj.bias'])
-            self.midas_layer_4_to_yolo_large_obj.weight = torch.nn.Parameter(chkpt['model']['midas_layer_4_to_yolo_large_obj.weight'])
-            self.midas_layer_4_to_yolo_large_obj.bias = torch.nn.Parameter(chkpt['model']['midas_layer_4_to_yolo_large_obj.bias'])
+            self.midas_layer_2_to_yolo_small_obj.weight = torch.nn.Parameter(chkpt[0]['model']['midas_layer_2_to_yolo_small_obj.weight'])
+            self.midas_layer_2_to_yolo_small_obj.bias = torch.nn.Parameter(chkpt[0]['model']['midas_layer_2_to_yolo_small_obj.bias'])
+            self.midas_layer_3_to_yolo_med_obj.weight = torch.nn.Parameter(chkpt[0]['model']['midas_layer_3_to_yolo_med_obj.weight'])
+            self.midas_layer_3_to_yolo_med_obj.bias = torch.nn.Parameter(chkpt[0]['model']['midas_layer_3_to_yolo_med_obj.bias'])
+            self.midas_layer_4_to_yolo_med_obj.weight = torch.nn.Parameter(chkpt[0]['model']['midas_layer_4_to_yolo_med_obj.weight'])
+            self.midas_layer_4_to_yolo_med_obj.bias = torch.nn.Parameter(chkpt[0]['model']['midas_layer_4_to_yolo_med_obj.bias'])
+            self.midas_layer_4_to_yolo_large_obj.weight = torch.nn.Parameter(chkpt[0]['model']['midas_layer_4_to_yolo_large_obj.weight'])
+            self.midas_layer_4_to_yolo_large_obj.bias = torch.nn.Parameter(chkpt[0]['model']['midas_layer_4_to_yolo_large_obj.bias'])
             
         elif self.train_mode == 'planercnn' or self.train_mode == 'all':
             planer_cnn_file = 'weights/planer_checkpoint.pth'
@@ -105,7 +105,7 @@ def load_doepd_weights(self, device='cpu', scratch=False, train_mode = False, lo
             plane_rcnn_weights = []
             num_items = 0
             
-            for k, v in chkpt.items():
+            for k, v in chkpt[1].items():
                 if num_items>=728:
                     # eg k = depth.deconv1.2.running_var
                     # we need plane_rcnn_decoder.depth.deconv1.2.running_var
@@ -120,7 +120,7 @@ def load_doepd_weights(self, device='cpu', scratch=False, train_mode = False, lo
         chkpt[0] = torch.load(yolo_weight_file, map_location = device)
             
         num_items=0
-        for k, v in chkpt['model'].items():
+        for k, v in chkpt[0]['model'].items():
             if num_items >= 354:
                 if not k.endswith('num_batches_tracked'):
                     if v.shape[0]!=255:
