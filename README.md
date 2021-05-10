@@ -6,6 +6,7 @@ As the name suggests, this project involves
 * Object detection
 * Monocular depth estimation
 * Plane Segmentation. 
+
 Introducing, *DoepdNet* (e before p is actually e after p, and d is silent, making it DopeNet.)
 ## 2. Model Architecture
 ## 3. Training
