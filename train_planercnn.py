@@ -104,7 +104,7 @@ def train(options):
         pass
 
     print(f'Starting training for {options.numEpochs} epochs')
-    for epoch in range(options.numEpochs):
+    for epoch in range(options.epochs):
         epoch_losses = []
         # print("Calculating data iterator")
         data_iterator = tqdm(dataloader, total=len(dataset) + 1)
