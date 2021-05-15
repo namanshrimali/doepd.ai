@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from .midas.midas_net import MidasNet
 from utils.config import PlaneConfig
+
 class DoepdNet(torch.nn.Module):
     midas_encoder_layered_output = []
     
@@ -21,9 +22,7 @@ class DoepdNet(torch.nn.Module):
         self.plane_rcnn_decoder = None
         
         if self.train_mode == 'yolo' or self.train_mode == 'all':
-            from .yolo.yolo_decoder import YoloDecoder
-            from .yolo.yolo_decoder import load_yolo_decoder_weights
-            
+            from .yolo.yolo_decoder import YoloDecoder            
             # Each of the three layers in yolo takes input from last 3 layers of midas
             self.yolo_decoder = YoloDecoder(midas_encoder_filters, (image_size, image_size))
             self.yolo_layers = self.yolo_decoder.yolo_layers
@@ -64,13 +63,13 @@ class DoepdNet(torch.nn.Module):
         elif self.train_mode == 'planercnn' or self.train_mode == 'all':
             doepd_forward_output[2] = self.plane_rcnn_decoder.predict(x, plane_rcnn_image_meta, mode, encoder_layered_outputs = encoder_layered_outputs, return_feature_map= return_feature_map)
         return doepd_forward_output
+    
 def load_doepd_weights(self, device='cpu', scratch=False, train_mode = False, load_mode='all'):
     yolo_weights = []
     chkpt = [None, None]
     from .yolo.yolo_decoder import load_yolo_decoder_weights
     if not scratch:
-        # loading yolo weights
-            
+        # loading yolo weights   
         if self.train_mode == 'yolo' or self.train_mode == 'all':
             yolo_weight_file =  None
             # loading yolo weights from last/best based on train_mode. Will update to add planercnn weights
