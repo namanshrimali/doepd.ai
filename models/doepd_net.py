@@ -4,28 +4,24 @@ from .midas.midas_net import MidasNet
 from utils.config import PlaneConfig
 
 class DoepdNet(torch.nn.Module):
+    """
+    There are 3 training/inferencing modes available for my model.
+    1. Yolo         : Trains/Inferences only yolo layer, while ignoring midas and planeRCNN
+    2. PlaneRCNN    : Trains/Inferences only PlaneRCNN layer, while ignoring midas and yolo
+    3. All          : Trains/Inferences every layer
+    """
     midas_encoder_layered_output = []
     
     def __init__(self, train_mode, midas_weights = "weights/model-f6b98070.pt", image_size=384):
         super(DoepdNet, self).__init__()
         self.train_mode = train_mode
 
-        self.midas_net = MidasNet(midas_weights)
-        
+        self.midas_net = MidasNet(midas_weights)    
         midas_encoder_filters = [256, 256, 512, 512, 1024] # output filters from each layer of resnext 101
-        self.yolo_decoder = None
-        self.yolo_layers = None
-        self.midas_layer_2_to_yolo_small_obj = None
-        self.midas_layer_3_to_yolo_med_obj = None
-        self.midas_layer_4_to_yolo_med_obj = None
-        self.midas_layer_4_to_yolo_large_obj = None
-        self.plane_rcnn_decoder = None
-        
         if self.train_mode == 'yolo' or self.train_mode == 'all':
-            from .yolo.yolo_decoder import YoloDecoder            
+            from .yolo.yolo_decoder import YoloDecoder   
             # Each of the three layers in yolo takes input from last 3 layers of midas
             self.yolo_decoder = YoloDecoder(midas_encoder_filters, (image_size, image_size))
-            self.yolo_layers = self.yolo_decoder.yolo_layers
             self.midas_layer_2_to_yolo_small_obj = nn.Conv2d(in_channels= 512, out_channels = 256, kernel_size = 1, padding = 0)
             self.midas_layer_3_to_yolo_med_obj = nn.Conv2d(in_channels= 1024, out_channels = 512, kernel_size = 1, padding = 0)
             self.midas_layer_4_to_yolo_med_obj = nn.Conv2d(in_channels= 2048, out_channels = 512, kernel_size = 1, padding = 0)
