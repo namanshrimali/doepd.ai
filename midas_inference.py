@@ -12,7 +12,7 @@ from models.doepd_net import DoepdNet
 from utils.transforms import Resize, NormalizeImage, PrepareForNet
 
 
-def run(input_path, output_path, model_path, optimize=True):
+def run(input_path, output_path, optimize=True):
     """Run MonoDepthNN to compute depth maps.
 
     Args:
@@ -25,7 +25,7 @@ def run(input_path, output_path, model_path, optimize=True):
     # select device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("device: %s" % device)
-    model = DoepdNet(train_mode='midas')
+    model = DoepdNet(run_mode='midas').to(device)
     net_w, net_h = 384, 384
 
     transform = Compose(
@@ -45,18 +45,6 @@ def run(input_path, output_path, model_path, optimize=True):
     )
 
     model.eval()
-    
-    # if optimize==True:
-    #     rand_example = torch.rand(1, 3, net_h, net_w)
-    #     model(rand_example)
-    #     traced_script_module = torch.jit.trace(model, rand_example)
-    #     model = traced_script_module
-    
-    #     if device == torch.device("cuda"):
-    #         model = model.to(memory_format=torch.channels_last)  
-    #         model = model.half()
-
-    model.to(device)
 
     # get input
     img_names = glob.glob(os.path.join(input_path, "*"))
@@ -117,13 +105,6 @@ if __name__ == "__main__":
         help='folder for output images'
     )
 
-    parser.add_argument('-t', '--model_type', 
-        default='large',
-        help='model type: large or small'
-    )
-
-    parser.set_defaults(optimize=True)
-
     args = parser.parse_args()
 
     # set torch options
@@ -131,4 +112,4 @@ if __name__ == "__main__":
     torch.backends.cudnn.benchmark = True
 
     # compute depth maps
-    run(args.input_path, args.output_path, args.model_weights, args.optimize)
+    run(args.input_path, args.output_path)

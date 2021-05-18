@@ -36,7 +36,7 @@ class PlaneRCNNDetector():
         self.options = options
         self.config = config
         self.modelType = modelType
-        self.model = DoepdNet(train_mode='planercnn')
+        self.model = DoepdNet(run_mode='planercnn')
         self.model.cuda()
         self.model.eval()
 

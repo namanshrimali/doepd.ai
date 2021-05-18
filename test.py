@@ -9,7 +9,7 @@ from utils.utils import *
 from utils.parse_config import *
 
 
-def test(cfg,
+def test(
          data,
          weights=None,
          batch_size=16,
@@ -31,7 +31,7 @@ def test(cfg,
             os.remove(f)
 
         # Initialize model
-        model = DoepdNet(train_mode='yolo', image_size = img_size)
+        model = DoepdNet(run_mode='yolo', image_size = img_size)
         load_doepd_weights(model, device=device)
 
         # Fuse

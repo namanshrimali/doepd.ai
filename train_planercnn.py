@@ -43,7 +43,7 @@ def train(options):
 
     dataloader = DataLoader(dataset, batch_size=1, shuffle=True, num_workers=16)
 
-    model = DoepdNet(train_mode='planercnn')
+    model = DoepdNet(run_mode='planercnn')
     refine_model = RefineModel(options)
     model.cuda()
     model.train()

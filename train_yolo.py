@@ -58,12 +58,10 @@ if hyp['fl_gamma']:
 
 def train_yolo(opt):
     gdrive_dir = opt.save_dir
-    cfg = opt.cfg
     data = opt.data
     epochs = opt.epochs  # 500200 batches at bs 64, 117263 images = 273 epochs
     batch_size = opt.batch_size
     accumulate = opt.accumulate  # effective bs = batch_size * accumulate = 16 * 4 = 64
-    weights = opt.weights  # initial training weights
     imgsz_min, imgsz_max, imgsz_test = opt.img_size  # img sizes (min, max, test)
 
     # Image Sizes
@@ -83,7 +81,7 @@ def train_yolo(opt):
     data_dict = parse_data_cfg(data)
     train_path = data_dict['train']
     test_path = data_dict['valid']
-    nc = 1 if opt.single_cls else int(data_dict['classes'])  # number of classes
+    nc = int(data_dict['classes'])  # number of classes
     hyp['cls'] *= nc / 80  # update coco-tuned hyp['cls'] to current dataset
 
     # Remove previous results
@@ -91,7 +89,7 @@ def train_yolo(opt):
         os.remove(f)
 
     # Initialize model
-    model = DoepdNet(train_mode='yolo', image_size=opt.img_size)
+    model = DoepdNet(run_mode='yolo', image_size=opt.img_size)
     chkpt = load_doepd_weights(model, device=device, train_mode=True)[0]
     model.to(device)    
     
@@ -166,8 +164,7 @@ def train_yolo(opt):
     # Dataset
     dataset = LoadImagesAndLabels(train_path, img_size, batch_size,
                                   augment=True,
-                                  hyp=hyp,  # augmentation hyperparameters
-                                  single_cls=opt.single_cls)
+                                  hyp=hyp)  # augmentation hyperparameters
 
     # Dataloader
     batch_size = min(batch_size, len(dataset))
@@ -182,8 +179,7 @@ def train_yolo(opt):
     # Testloader
     testloader = torch.utils.data.DataLoader(LoadImagesAndLabels(test_path, imgsz_test, batch_size,
                                                                  hyp=hyp,
-                                                                 rect=True,
-                                                                 single_cls=opt.single_cls),
+                                                                 rect=True),
                                              batch_size=batch_size,
                                              num_workers=nw,
                                              pin_memory=True,
@@ -222,7 +218,7 @@ def train_yolo(opt):
         pbar = tqdm(enumerate(dataloader), total=nb)  # progress bar
         for i, (imgs, targets, paths, _) in pbar:  # batch -------------------------------------------------------------
             ni = i + nb * epoch  # number integrated batches (since train start)
-            imgs = imgs.to(device).float() / 255.0  # uint8 to float32, 0 - 255 to 0.0 - 1.0
+            imgs = imgs.to(device).float()  # uint8 to float32, 0 - 255 to 0.0 - 1.0
             targets = targets.to(device)
 
             # Burn-in
@@ -247,7 +243,7 @@ def train_yolo(opt):
                     imgs = F.interpolate(imgs, size=ns, mode='bilinear', align_corners=False)
 
             # Run model
-            pred = model(imgs)
+            pred = model(imgs)[0]
 
             # Compute loss
             loss, loss_items = compute_loss(pred, targets, model)
@@ -281,8 +277,8 @@ def train_yolo(opt):
             if ni < 1:
                 f = 'train_batch%g.png' % i  # filename
                 plot_images(imgs=imgs, targets=targets, paths=paths, fname=f)
-                if tb_writer:
-                    tb_writer.add_image(f, cv2.imread(f)[:, :, ::-1], dataformats='HWC')
+                # if tb_writer:
+                #     tb_writer.add_image(f, cv2.imread(f)[:, :, ::-1], dataformats='HWC')
                     # tb_writer.add_graph(model, imgs)  # add model to tensorboard
 
             # end batch ------------------------------------------------------------------------------------------------
@@ -295,13 +291,12 @@ def train_yolo(opt):
         final_epoch = epoch + 1 == epochs
         if final_epoch:  # Calculate mAP
             is_coco = any([x in data for x in ['coco.data', 'coco2014.data', 'coco2017.data']]) and model.nc == 80
-            results, maps = test.test(cfg,
+            results, maps = test.test(
                                       data,
                                       batch_size=batch_size,
                                       img_size=imgsz_test,
                                       model=ema.ema,
                                       save_json=final_epoch and is_coco,
-                                      single_cls=opt.single_cls,
                                       dataloader=testloader)
 
         # Write epoch results
@@ -309,12 +304,12 @@ def train_yolo(opt):
             f.write(s + '%10.3g' * 7 % results + '\n')  # P, R, mAP, F1, test_losses=(GIoU, obj, cls)
 
         # Write Tensorboard results
-        if tb_writer:
-            tags = ['train/giou_loss', 'train/obj_loss', 'train/cls_loss',
-                    'metrics/precision', 'metrics/recall', 'metrics/mAP_0.5', 'metrics/F1',
-                    'val/giou_loss', 'val/obj_loss', 'val/cls_loss']
-            for x, tag in zip(list(mloss[:-1]) + list(results), tags):
-                tb_writer.add_scalar(tag, x, epoch)
+        # if tb_writer:
+        #     tags = ['train/giou_loss', 'train/obj_loss', 'train/cls_loss',
+        #             'metrics/precision', 'metrics/recall', 'metrics/mAP_0.5', 'metrics/F1',
+        #             'val/giou_loss', 'val/obj_loss', 'val/cls_loss']
+        #     for x, tag in zip(list(mloss[:-1]) + list(results), tags):
+        #         tb_writer.add_scalar(tag, x, epoch)
 
         # Update best mAP
         fi = fitness(np.array(results).reshape(1, -1))  # fitness_i = weighted combination of [P, R, mAP, F1]
@@ -360,7 +355,7 @@ def train_yolo(opt):
 
 
 if __name__ == '__main__':
-    from utils.doepd_options import parse_args
+    from utils.train_options import parse_args
     opt = parse_args()
     opt.img_size.extend([opt.img_size[-1]] * (3 - len(opt.img_size)))  # extend to 3 sizes (min, max, test)
     device = torch_utils.select_device(opt.device, apex=mixed_precision, batch_size=opt.batch_size)
