@@ -289,15 +289,15 @@ def train_yolo(opt):
         # Process epoch results
         ema.update_attr(model)
         final_epoch = epoch + 1 == epochs
-        if final_epoch:  # Calculate mAP
-            is_coco = any([x in data for x in ['coco.data', 'coco2014.data', 'coco2017.data']]) and model.nc == 80
-            results, maps = test.test(
-                                      data,
-                                      batch_size=batch_size,
-                                      img_size=imgsz_test,
-                                      model=ema.ema,
-                                      save_json=final_epoch and is_coco,
-                                      dataloader=testloader)
+        # if not opt.notest or final_epoch:  # Calculate mAP
+        is_coco = any([x in data for x in ['coco.data', 'coco2014.data', 'coco2017.data']]) and model.nc == 80
+        results, maps = test.test(
+            data,
+            batch_size=batch_size,
+            img_size=imgsz_test,
+            model=ema.ema,
+            save_json=final_epoch and is_coco,
+            dataloader=testloader)
 
         # Write epoch results
         with open(results_file, 'a') as f:
@@ -328,12 +328,12 @@ def train_yolo(opt):
                      'optimizer': None if final_epoch else optimizer.state_dict()}
 
             # Save last checkpoint
-            torch.save(chkpt, f'{gdrive_dir}/doepd_yolo_last.pt')
+            torch.save(chkpt, f'{gdrive_dir}/doepd_yolo_last_255.pt')
             torch.save(chkpt, last)
 
             # Save best checkpoint
             if (best_fitness == fi) and not final_epoch:
-                torch.save(chkpt, f'{gdrive_dir}/doepd_yolo_best.pt')
+                torch.save(chkpt, f'{gdrive_dir}/doepd_yolo_best_255.pt')
                 torch.save(chkpt, best)
 
             # Save backup every 10 epochs (optional)
