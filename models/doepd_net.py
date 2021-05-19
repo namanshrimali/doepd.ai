@@ -29,6 +29,8 @@ class DoepdNet(torch.nn.Module):
         
         # if self.run_mode == 'planercnn' or self.run_mode == 'all':
         #     from .planercnn.planercnn_decoder import MaskRCNN
+        #     from utils.config import PlaneConfig
+
         #     import sys
             
         #     sys.argv=['']

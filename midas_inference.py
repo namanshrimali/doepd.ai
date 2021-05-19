@@ -33,7 +33,6 @@ def run(input_path, output_path, optimize=True):
             Resize(
                 net_w,
                 net_h,
-                resize_target=None,
                 keep_aspect_ratio=True,
                 ensure_multiple_of=32,
                 resize_method="upper_bound",

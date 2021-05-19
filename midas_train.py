@@ -20,8 +20,8 @@ def train(batch_size, epochs):
             Resize(
                 net_w,
                 net_h,
-                resize_target=None,
-                keep_aspect_ratio=True,
+                resize_target=False,
+                keep_aspect_ratio=False,
                 ensure_multiple_of=32,
                 resize_method="upper_bound",
                 image_interpolation_method=cv2.INTER_CUBIC,
