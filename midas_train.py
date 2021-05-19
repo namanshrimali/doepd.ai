@@ -61,8 +61,8 @@ def train(batch_size, epochs):
         torch.save(chkpt, "/content/drive/MyDrive/doepd/weights/midas_last.pt")
 
     
-if __name__=='main':
+if __name__=='__main__':
     BATCH_SIZE = 64
     # WEIGHT_PATH = "weights/midas_v21-f6b98070.pt"
     EPOCHS = 50
-    train(batch_size = BATCH_SIZE, weight_path = WEIGHT_PATH, epochs = EPOCHS)
+    train(batch_size = BATCH_SIZE, epochs = EPOCHS)
