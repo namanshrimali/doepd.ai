@@ -40,8 +40,8 @@ class DoepdNet(torch.nn.Module):
         #     config = PlaneConfig(args)
         #     self.plane_rcnn_decoder = MaskRCNN(config)
             
-        # Freeze training for midas (encoder & decoder)
-        for param in self.midas_net.parameters():
+        # Freeze training for midas (encoder)
+        for param in self.midas_net.pretrained.parameters():
             param.requires_grad = False
     
     def forward(self, x, plane_rcnn_image_meta = None, augment=False, mode='inference_detection', use_nms=2, use_refinement=True, return_feature_map=False):
