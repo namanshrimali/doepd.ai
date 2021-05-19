@@ -50,10 +50,11 @@ def train(batch_size, epochs):
             image, target_depth = image.float().to(device), target_depth.float().to(device)
             image = image / 255.0
             midas_pred = model(image)[1]
-            loss(midas_pred, target_depth)
-            loss.backward()
+            print(midas_pred.shape, target_depth.shape)
+            output = loss(midas_pred, target_depth)
+            output.backward()
             optimizer.step()
-            pbar.set_description(desc= f'Epoch = {epoch} Loss={loss.item()} Batch_id={batch_idx}')
+            pbar.set_description(desc= f'Epoch = {epoch} Loss={output.item()} Batch_id={batch_idx}')
         chkpt = {
             "epoch": epoch,
             "model": model.state_dict()
@@ -62,7 +63,7 @@ def train(batch_size, epochs):
 
     
 if __name__=='__main__':
-    BATCH_SIZE = 64
+    BATCH_SIZE = 32
     # WEIGHT_PATH = "weights/midas_v21-f6b98070.pt"
     EPOCHS = 50
     train(batch_size = BATCH_SIZE, epochs = EPOCHS)
