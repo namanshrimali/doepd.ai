@@ -24,7 +24,7 @@ class LoadImageDepthAndLabels(Dataset):
     
     def __getitem__(self, index):
         image = cv2.imread(self.images[index]) #BGR
-        depth = cv2.imread(self.depth_images[index]) #BGR
+        depth = cv2.imread(self.depth_images[index], cv2.IMREAD_UNCHANGED) #BGR
         if depth is not None:
             return self.transforms({"image": image})["image"], self.transforms({"image": depth})["image"]
         else:
