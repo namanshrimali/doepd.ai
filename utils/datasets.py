@@ -73,29 +73,12 @@ class LoadImages:  # for inference
         if self.count == self.nF:
             raise StopIteration
         path = self.files[self.count]
-        if self.video_flag[self.count]:
-            # Read video
-            self.mode = 'video'
-            ret_val, img0 = self.cap.read()
-            if not ret_val:
-                self.count += 1
-                self.cap.release()
-                if self.count == self.nF:  # last video
-                    raise StopIteration
-                else:
-                    path = self.files[self.count]
-                    self.new_video(path)
-                    ret_val, img0 = self.cap.read()
-
-            self.frame += 1
-            print('video %g/%g (%g/%g) %s: ' % (self.count + 1, self.nF, self.frame, self.nframes, path), end='')
-
-        else:
-            # Read image
-            self.count += 1
-            img0 = cv2.imread(path)  # BGR
-            assert img0 is not None, 'Image Not Found ' + path
-            print("  processing image {} ({}/{})".format(img0, self.count + 1, self.nF))
+       
+        # Read image
+        self.count += 1
+        img0 = cv2.imread(path)  # BGR
+        assert img0 is not None, 'Image Not Found ' + path
+        print("  processing image {} ({}/{})".format(img0, self.count + 1, self.nF))
 
 
         # Padded resize
@@ -107,6 +90,7 @@ class LoadImages:  # for inference
         img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
 
         img = np.ascontiguousarray(img)
+        img = img/255.0
         
         # cv2.imwrite(path + '.letterbox.jpg', 255 * img.transpose((1, 2, 0))[:, :, ::-1])  # save letterbox image
         return path, img, img0, self.cap

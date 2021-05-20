@@ -1,8 +1,10 @@
 weights/*
 models/**/__pycache__
+datasets/__pycache__
 utils/__pycache__
 data/customdata
 data/samples
 data/smalcoco
 data/coco.names
 data/assignment13
+data/*.zip
