@@ -84,7 +84,7 @@ def run(input_path, output_path, optimize=True):
 
         # output
         filename = os.path.join(
-            output_path, os.path.splitext(os.path.basename(img_name))[0]
+            output_path, os.path.splitext(os.path.basename("./data/assignment13/images/2.jpg"))[0]
         )
         utils.write_depth(filename, prediction, bits=2)
 

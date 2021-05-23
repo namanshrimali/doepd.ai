@@ -8,7 +8,7 @@ import random
 import time
 from pathlib import Path
 import cv2
-
+import utils.midas_utils as utils
 
 
 ONNX_EXPORT = False
@@ -49,6 +49,17 @@ def inference(options):
         
         yolo_prediction = doepd_prediction[0][0]
         midas_prediction = doepd_prediction[1]
+        
+        print(midas_prediction.shape)
+
+        midas_prediction = midas_prediction.detach().squeeze().cpu().numpy()
+        # print(midas_prediction.shape)
+
+        # output
+        filename = os.path.join(
+            "/content/doepd.ai/output", os.path.splitext(os.path.basename("./data/assignment13/images/2.jpg"))[0]
+        )
+        utils.write_depth(filename, midas_prediction, bits=2)
         
         # non max supression for yolo output
         yolo_prediction = non_max_suppression(yolo_prediction, options.conf_thres, options.iou_thres, multi_label=False)
