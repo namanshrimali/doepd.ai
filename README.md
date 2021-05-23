@@ -15,12 +15,6 @@ It is while developing a machine learning model to have a use case which would h
 Introducing, *DoepdNet* (again, read it _DopeNet_)
 
 ---
-## Model Architecture
-I've taken Intel MiDaS as the base model, segregated it's encoder (ResNext-101) and decoder. I've then used MiDaS' encoder to replace encoder for Yolo (Darknet model) & PlanerCNN's encoder (ResNet-52). I've also added some conversion layers that acts as a link from midas' encoder to yolo decoder.
-
-The following diagram shows the main components of DoepdNet
-
-![Model output](assets/doepd_architecture.png)
 
 ### Key Features
 * An Encoder-(Bottleneck)-Decoder network that significantly limits number of parameters to produce different results
@@ -43,7 +37,14 @@ pip install -r requirements.txt
 ```
 ---
 
-## Models
+## Model
+
+I've taken Intel MiDaS as the base model, segregated it's encoder (ResNext-101) and decoder. I've then used MiDaS' encoder to replace encoder for Yolo (Darknet model) & PlanerCNN's encoder (ResNet-52). I've also added some conversion layers that acts as a link from midas' encoder to yolo decoder.
+
+The following diagram shows the main components of DoepdNet
+
+![Model output](assets/doepd_architecture.png)
+
 Models are saved under `weights`. You can download our trained model from [here](https://drive.google.com/drive/folders/1IsKWncHbNlouM-D9ob7bGgUdRdEMQGAC?usp=sharing), and put it under `weigths` if you want to fine-tune it or run inferences.
 
 ## Training
