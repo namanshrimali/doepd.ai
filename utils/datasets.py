@@ -78,7 +78,7 @@ class LoadImages:  # for inference
         self.count += 1
         img0 = cv2.imread(path)  # BGR
         assert img0 is not None, 'Image Not Found ' + path
-        print("  processing image {} ({}/{})".format(img0, self.count + 1, self.nF))
+        print("  processing image {} ({}/{})".format(path, self.count, self.nF))
 
 
         # Padded resize

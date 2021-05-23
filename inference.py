@@ -27,7 +27,6 @@ def inference(options):
     model = DoepdNet(run_mode = options.run_mode, image_size = img_size)
     
     load_doepd_weights(model, device=device, train_mode=False)
-
     # Eval mode
     model.to(device).eval()
     
@@ -46,53 +45,62 @@ def inference(options):
         time_before_inference = torch_utils.time_synchronized()
         doepd_prediction = model(img)
         time_after_inference = torch_utils.time_synchronized()
-        
-        yolo_prediction = doepd_prediction[0][0]
-        midas_prediction = doepd_prediction[1]
-        
-        print(midas_prediction.shape)
-
-        midas_prediction = midas_prediction.detach().squeeze().cpu().numpy()
-        # print(midas_prediction.shape)
-
-        # output
-        filename = os.path.join(
-            "/content/doepd.ai/output", os.path.splitext(os.path.basename("./data/assignment13/images/2.jpg"))[0]
-        )
-        utils.write_depth(filename, midas_prediction, bits=2)
-        
-        # non max supression for yolo output
-        yolo_prediction = non_max_suppression(yolo_prediction, options.conf_thres, options.iou_thres, multi_label=False)
+        if options.run_mode == 'yolo' or options.run_mode == 'all':
+            yolo_prediction = doepd_prediction[0][0]
+            # non max supression for yolo output
+            yolo_prediction = non_max_suppression(yolo_prediction, options.conf_thres, options.iou_thres, multi_label=False)
                 # Process detections
+            for _, det in enumerate(yolo_prediction):  # detections per image
+                p, s, im0 = path, '', im0s
+                save_path = os.path.join(out, os.path.splitext(os.path.basename(p))[0] + "_yolo.png")
+                s += '%gx%g ' % img.shape[2:]  # print string
+                if det is not None and len(det):
+                    # Rescale boxes from img_size to im0 size
+                    det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
+
+                    # Print results
+                    for c in det[:, -1].unique():
+                        n = (det[:, -1] == c).sum()  # detections per class
+                        s += '%g %ss, ' % (n, names[int(c)])  # add to string
+
+                    # Write results
+                    for *xyxy, conf, cls in det:
+                        label = '%s %.2f' % (names[int(cls)], conf)
+                        plot_one_box(xyxy, im0, label=label, color=colors[int(cls)])
+
+                # Print time (inference + NMS)
+                print('%sDone.' % s)
+                # Save results (image with detections)
+                cv2.imwrite(save_path, im0)
         
-        for _, det in enumerate(yolo_prediction):  # detections per image
-            p, s, im0 = path, '', im0s
+        if options.run_mode == 'midas' or options.run_mode == 'all':
+            midas_prediction = doepd_prediction[1]
+            midas_prediction = (
+                torch.nn.functional.interpolate(
+                midas_prediction.unsqueeze(1),
+                size=im0s.shape[:2],
+                mode="bicubic",
+                align_corners=False)
+                .detach()
+                .squeeze()
+                .cpu()
+                .numpy()
+            )
+        # output
+            depth_filename = os.path.join(
+                out, os.path.splitext(os.path.basename(path))[0] + "_depth"
+            )
 
-            save_path = str(Path(out) / Path(p).name)
-            s += '%gx%g ' % img.shape[2:]  # print string
-            if det is not None and len(det):
-                # Rescale boxes from img_size to im0 size
-                det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
+            utils.write_depth(depth_filename, midas_prediction, bits=2)
+            print('%gx%g Depth Done' % midas_prediction.shape[:2])
 
-                # Print results
-                for c in det[:, -1].unique():
-                    n = (det[:, -1] == c).sum()  # detections per class
-                    s += '%g %ss, ' % (n, names[int(c)])  # add to string
-
-                # Write results
-                for *xyxy, conf, cls in det:
-                    label = '%s %.2f' % (names[int(cls)], conf)
-                    plot_one_box(xyxy, im0, label=label, color=colors[int(cls)])
-
-            # Print time (inference + NMS)
-            print('%sDone. (%.3fs)' % (s, time_after_inference - time_before_inference))
-            # Save results (image with detections)
-            cv2.imwrite(save_path, im0)
-            print('Results saved to %s' % os.getcwd() + os.sep + out)
+        print(f"Inferencing completed in {(time_after_inference - time_before_inference):.3f}s")
+        print('Results saved to %s' % out)
 
     print('Done. (%.3fs)' % (time.time() - start_time))
         
 if __name__ == '__main__':
     from utils.inference_options import parse_args
     options = parse_args()
+    print(options)
     inference(options = options)
